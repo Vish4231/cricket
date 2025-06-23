@@ -1,0 +1,107 @@
+# Build directories
+build/
+build-debug/
+build-release/
+out/
+bin/
+obj/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+CricketManager
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Asset files (uncomment if you want to exclude assets)
+# assets/models/
+# assets/textures/
+# assets/sounds/
+# assets/fonts/
+
+# Game save files
+saves/
+*.save
+*.dat
+
+# Documentation build
+docs/_build/
+
+# Coverage reports
+coverage/
+*.gcov
+*.gcda
+*.gcno
+
+# Profiling data
+*.prof
+gmon.out
+
+# Backup files
+*.bak
+*.backup
+
+# Package files
+*.tar.gz
+*.zip
+*.rar
+
+# Dependencies (if using git submodules)
+# third_party/ 

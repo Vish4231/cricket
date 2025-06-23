@@ -1,0 +1,251 @@
+{
+  "teams": [
+    {
+      "id": 1,
+      "name": "India",
+      "country": "India",
+      "home_venue": "Wankhede Stadium",
+      "coach": "Rahul Dravid",
+      "captain": "Rohit Sharma",
+      "founded": 1932,
+      "rankings": {
+        "test": 1,
+        "odi": 1,
+        "t20": 1
+      },
+      "stats": {
+        "matches_played": 1056,
+        "matches_won": 567,
+        "matches_lost": 389,
+        "matches_drawn": 100,
+        "win_percentage": 53.69
+      },
+      "finances": {
+        "budget": 50000000,
+        "spent": 35000000,
+        "revenue": 45000000
+      },
+      "facilities": {
+        "training_ground": "NCA Bangalore",
+        "academy": "BCCI Academy",
+        "medical_center": "BCCI Medical Center"
+      },
+      "players": [1, 2, 3]
+    },
+    {
+      "id": 2,
+      "name": "Australia",
+      "country": "Australia",
+      "home_venue": "MCG",
+      "coach": "Andrew McDonald",
+      "captain": "Pat Cummins",
+      "founded": 1877,
+      "rankings": {
+        "test": 2,
+        "odi": 2,
+        "t20": 3
+      },
+      "stats": {
+        "matches_played": 1023,
+        "matches_won": 598,
+        "matches_lost": 325,
+        "matches_drawn": 100,
+        "win_percentage": 58.46
+      },
+      "finances": {
+        "budget": 45000000,
+        "spent": 32000000,
+        "revenue": 42000000
+      },
+      "facilities": {
+        "training_ground": "Cricket Australia Centre",
+        "academy": "Cricket Australia Academy",
+        "medical_center": "CA Medical Center"
+      },
+      "players": [4, 5]
+    },
+    {
+      "id": 3,
+      "name": "England",
+      "country": "England",
+      "home_venue": "Lord's",
+      "coach": "Brendon McCullum",
+      "captain": "Ben Stokes",
+      "founded": 1877,
+      "rankings": {
+        "test": 3,
+        "odi": 3,
+        "t20": 2
+      },
+      "stats": {
+        "matches_played": 1045,
+        "matches_won": 485,
+        "matches_lost": 460,
+        "matches_drawn": 100,
+        "win_percentage": 46.41
+      },
+      "finances": {
+        "budget": 40000000,
+        "spent": 30000000,
+        "revenue": 38000000
+      },
+      "facilities": {
+        "training_ground": "Loughborough University",
+        "academy": "ECB Academy",
+        "medical_center": "ECB Medical Center"
+      },
+      "players": [6, 7]
+    },
+    {
+      "id": 4,
+      "name": "New Zealand",
+      "country": "New Zealand",
+      "home_venue": "Eden Park",
+      "coach": "Gary Stead",
+      "captain": "Kane Williamson",
+      "founded": 1930,
+      "rankings": {
+        "test": 4,
+        "odi": 4,
+        "t20": 4
+      },
+      "stats": {
+        "matches_played": 456,
+        "matches_won": 198,
+        "matches_lost": 208,
+        "matches_drawn": 50,
+        "win_percentage": 43.42
+      },
+      "finances": {
+        "budget": 25000000,
+        "spent": 18000000,
+        "revenue": 22000000
+      },
+      "facilities": {
+        "training_ground": "High Performance Centre",
+        "academy": "NZC Academy",
+        "medical_center": "NZC Medical Center"
+      },
+      "players": [8, 9]
+    },
+    {
+      "id": 5,
+      "name": "Pakistan",
+      "country": "Pakistan",
+      "home_venue": "Gaddafi Stadium",
+      "coach": "Grant Bradburn",
+      "captain": "Babar Azam",
+      "founded": 1952,
+      "rankings": {
+        "test": 5,
+        "odi": 5,
+        "t20": 5
+      },
+      "stats": {
+        "matches_played": 447,
+        "matches_won": 198,
+        "matches_lost": 199,
+        "matches_drawn": 50,
+        "win_percentage": 44.30
+      },
+      "finances": {
+        "budget": 30000000,
+        "spent": 22000000,
+        "revenue": 28000000
+      },
+      "facilities": {
+        "training_ground": "National Cricket Academy",
+        "academy": "PCB Academy",
+        "medical_center": "PCB Medical Center"
+      },
+      "players": [10]
+    },
+    {
+      "id": 6,
+      "name": "Mumbai Indians",
+      "country": "India",
+      "home_venue": "Wankhede Stadium",
+      "coach": "Mark Boucher",
+      "captain": "Hardik Pandya",
+      "founded": 2008,
+      "rankings": {
+        "ipl": 1
+      },
+      "stats": {
+        "matches_played": 247,
+        "matches_won": 129,
+        "matches_lost": 118,
+        "win_percentage": 52.23
+      },
+      "finances": {
+        "budget": 100000000,
+        "spent": 85000000,
+        "revenue": 95000000
+      },
+      "facilities": {
+        "training_ground": "Mumbai Indians Academy",
+        "academy": "MI Academy",
+        "medical_center": "MI Medical Center"
+      },
+      "players": [1, 2, 3]
+    },
+    {
+      "id": 7,
+      "name": "Chennai Super Kings",
+      "country": "India",
+      "home_venue": "M. A. Chidambaram Stadium",
+      "coach": "Stephen Fleming",
+      "captain": "MS Dhoni",
+      "founded": 2008,
+      "rankings": {
+        "ipl": 2
+      },
+      "stats": {
+        "matches_played": 206,
+        "matches_won": 121,
+        "matches_lost": 85,
+        "win_percentage": 58.74
+      },
+      "finances": {
+        "budget": 95000000,
+        "spent": 80000000,
+        "revenue": 90000000
+      },
+      "facilities": {
+        "training_ground": "CSK Academy",
+        "academy": "CSK Academy",
+        "medical_center": "CSK Medical Center"
+      },
+      "players": []
+    },
+    {
+      "id": 8,
+      "name": "Royal Challengers Bangalore",
+      "country": "India",
+      "home_venue": "M. Chinnaswamy Stadium",
+      "coach": "Andy Flower",
+      "captain": "Faf du Plessis",
+      "founded": 2008,
+      "rankings": {
+        "ipl": 3
+      },
+      "stats": {
+        "matches_played": 241,
+        "matches_won": 113,
+        "matches_lost": 128,
+        "win_percentage": 46.89
+      },
+      "finances": {
+        "budget": 90000000,
+        "spent": 75000000,
+        "revenue": 85000000
+      },
+      "facilities": {
+        "training_ground": "RCB Academy",
+        "academy": "RCB Academy",
+        "medical_center": "RCB Medical Center"
+      },
+      "players": [1]
+    }
+  ]
+} 

@@ -1,0 +1,96 @@
+{
+  "api_config": {
+    "cricapi": {
+      "base_url": "https://api.cricapi.com/v1",
+      "endpoints": {
+        "players": "/players",
+        "teams": "/teams",
+        "matches": "/matches",
+        "venues": "/venues",
+        "stats": "/stats",
+        "rankings": "/rankings",
+        "tournaments": "/tournaments",
+        "news": "/news"
+      },
+      "rate_limit": {
+        "requests_per_minute": 60,
+        "requests_per_hour": 1000
+      },
+      "cache": {
+        "enabled": true,
+        "expiry_seconds": 300
+      }
+    },
+    "cricket_data_org": {
+      "base_url": "https://api.cricket-data.org/v2",
+      "endpoints": {
+        "players": "/players",
+        "teams": "/teams",
+        "matches": "/matches",
+        "venues": "/venues",
+        "series": "/series"
+      },
+      "rate_limit": {
+        "requests_per_minute": 30,
+        "requests_per_hour": 500
+      },
+      "cache": {
+        "enabled": true,
+        "expiry_seconds": 600
+      }
+    },
+    "espn_cricinfo": {
+      "base_url": "https://hs-consumer-api.espncricinfo.com/v1",
+      "endpoints": {
+        "players": "/pages/player",
+        "teams": "/pages/team",
+        "matches": "/pages/match",
+        "series": "/pages/series"
+      },
+      "rate_limit": {
+        "requests_per_minute": 20,
+        "requests_per_hour": 300
+      },
+      "cache": {
+        "enabled": true,
+        "expiry_seconds": 900
+      }
+    }
+  },
+  "default_api": "cricapi",
+  "fallback_api": "cricket_data_org",
+  "api_keys": {
+    "cricapi": "",
+    "cricket_data_org": "",
+    "espn_cricinfo": ""
+  },
+  "features": {
+    "live_data": true,
+    "historical_data": true,
+    "player_stats": true,
+    "team_stats": true,
+    "match_commentary": true,
+    "news_feed": true,
+    "rankings": true,
+    "tournaments": true
+  },
+  "data_sources": {
+    "players": ["api", "local"],
+    "teams": ["api", "local"],
+    "venues": ["api", "local"],
+    "matches": ["api", "simulated"],
+    "stats": ["api", "calculated"],
+    "news": ["api"]
+  },
+  "simulation": {
+    "use_real_data": true,
+    "fallback_to_simulation": true,
+    "simulation_accuracy": 0.85,
+    "random_seed": 42
+  },
+  "offline_mode": {
+    "enabled": false,
+    "data_file": "assets/data/offline_data.json",
+    "last_sync": ""
+  }
+} 
