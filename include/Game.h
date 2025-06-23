@@ -1,10 +1,19 @@
 #pragma once
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
 #include <memory>
-#include <string>
 #include <vector>
+#include <string>
+#include <map>
+#include <functional>
+#include <chrono>
+#include <thread>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+#include <imgui.h>
+#include <imgui_impl_sdl2.h>
+#include <imgui_impl_opengl3.h>
 #include "Player.h"
 #include "Team.h"
 #include "MatchEngine.h"

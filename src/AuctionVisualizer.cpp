@@ -1,4 +1,5 @@
 #include "AuctionVisualizer.h"
+#include <glad/glad.h>
 #include "Shader.h"
 #include "Model.h"
 #include "ParticleSystem.h"
@@ -464,52 +465,11 @@ void AuctionVisualizer::setCurrentPlayer(const std::string& playerId) {
 }
 
 void AuctionVisualizer::onBidPlaced(const std::string& teamName, float bidAmount) {
-    // Update team bidding state
-    setTeamBidding(teamName, true, bidAmount);
-    
-    // Update current bid
-    currentBid = bidAmount;
-    currentBidder = teamName;
-    
-    // Add bidding event to history
-    BiddingEvent event;
-    event.teamName = teamName;
-    event.bidAmount = bidAmount;
-    event.timestamp = globalTime;
-    event.isWinningBid = true;
-    event.teamColor = getTeamColor(teamName);
-    event.representativeName = "Team Rep";
-    biddingHistory.push(event);
-    
-    // Trigger effects
-    addParticleEffect(glm::vec3(0, 5, 0), "bid_placed");
-    addScreenEffect("bid_flash", 0.3f);
-    
-    // Update camera to focus on bidding team
-    focusOnTeam(teamName);
-    
-    if (bidPlacedCallback) {
-        bidPlacedCallback(teamName, bidAmount);
-    }
+    // TODO: Implement or leave empty if not needed
 }
 
 void AuctionVisualizer::onBidWon(const std::string& teamName, float finalBid) {
-    winningBidder = teamName;
-    
-    // Add celebration effects
-    addCelebrationEffect(teamName);
-    
-    // Update team state
-    auto it = std::find_if(teamReps.begin(), teamReps.end(),
-                          [&](const TeamRepresentative& t) { return t.teamName == teamName; });
-    
-    if (it != teamReps.end()) {
-        it->isBidding = false;
-        it->isActive = true;
-    }
-    
-    // Add screen effects
-    addScreenEffect("bid_won", 2.0f);
+    // TODO: Implement or leave empty if not needed
 }
 
 void AuctionVisualizer::onPlayerSold(const std::string& playerId, const std::string& teamName, float price) {

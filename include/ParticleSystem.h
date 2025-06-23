@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include "Shader.h"
 
 struct Particle {
     glm::vec3 position;
@@ -95,7 +96,7 @@ public:
 private:
     std::vector<Particle> particles;
     std::vector<ParticleEmitter> emitters;
-    std::unique_ptr<class Shader> particleShader;
+    class Shader* particleShader;
     
     // OpenGL buffers
     GLuint VAO, VBO, instanceVBO;

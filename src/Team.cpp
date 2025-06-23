@@ -74,6 +74,150 @@ Team::Team(Team&& other) noexcept
     , youthPlayers(std::move(other.youthPlayers)) {
 }
 
+Team::Team(const Team& other)
+    : name(other.name)
+    , type(other.type)
+    , city(other.city)
+    , owner(other.owner)
+    , founded(other.founded)
+    , colors(other.colors)
+    , logo(other.logo)
+    , budget(other.budget)
+    , trophyCount(other.trophyCount)
+    , trophies(other.trophies)
+    , settings(other.settings)
+    , stats(other.stats)
+    , statsMap(other.statsMap)
+    , teamRating(other.teamRating)
+    , coach(other.coach)
+    , manager(other.manager)
+    , captain(nullptr) // Will be set after copying players
+    , viceCaptain(nullptr) // Will be set after copying players
+    , homeVenue(other.homeVenue)
+    , currentFormation(other.currentFormation)
+    , fieldingPositions(other.fieldingPositions)
+    , matchStrategy(other.matchStrategy)
+    , finances(other.finances)
+    , morale(other.morale) {
+    
+    // Deep copy players
+    for (const auto& player : other.squad) {
+        squad.push_back(std::make_unique<Player>(*player));
+    }
+    
+    // Deep copy youth players
+    for (const auto& player : other.youthPlayers) {
+        youthPlayers.push_back(std::make_unique<Player>(*player));
+    }
+    
+    // Set up player pointers after copying
+    if (other.captain) {
+        captain = GetPlayer(other.captain->GetName());
+    }
+    if (other.viceCaptain) {
+        viceCaptain = GetPlayer(other.viceCaptain->GetName());
+    }
+    
+    // Set up playing XI, batting order, and bowling order
+    for (const auto& player : other.playingXI) {
+        Player* newPlayer = GetPlayer(player->GetName());
+        if (newPlayer) {
+            playingXI.push_back(newPlayer);
+        }
+    }
+    
+    for (const auto& player : other.battingOrder) {
+        Player* newPlayer = GetPlayer(player->GetName());
+        if (newPlayer) {
+            battingOrder.push_back(newPlayer);
+        }
+    }
+    
+    for (const auto& player : other.bowlingOrder) {
+        Player* newPlayer = GetPlayer(player->GetName());
+        if (newPlayer) {
+            bowlingOrder.push_back(newPlayer);
+        }
+    }
+}
+
+Team& Team::operator=(const Team& other) {
+    if (this != &other) {
+        name = other.name;
+        type = other.type;
+        city = other.city;
+        owner = other.owner;
+        founded = other.founded;
+        colors = other.colors;
+        logo = other.logo;
+        budget = other.budget;
+        trophyCount = other.trophyCount;
+        trophies = other.trophies;
+        settings = other.settings;
+        stats = other.stats;
+        statsMap = other.statsMap;
+        teamRating = other.teamRating;
+        coach = other.coach;
+        manager = other.manager;
+        captain = nullptr;
+        viceCaptain = nullptr;
+        homeVenue = other.homeVenue;
+        currentFormation = other.currentFormation;
+        fieldingPositions = other.fieldingPositions;
+        matchStrategy = other.matchStrategy;
+        finances = other.finances;
+        morale = other.morale;
+        
+        // Clear existing players
+        squad.clear();
+        youthPlayers.clear();
+        playingXI.clear();
+        battingOrder.clear();
+        bowlingOrder.clear();
+        
+        // Deep copy players
+        for (const auto& player : other.squad) {
+            squad.push_back(std::make_unique<Player>(*player));
+        }
+        
+        // Deep copy youth players
+        for (const auto& player : other.youthPlayers) {
+            youthPlayers.push_back(std::make_unique<Player>(*player));
+        }
+        
+        // Set up player pointers after copying
+        if (other.captain) {
+            captain = GetPlayer(other.captain->GetName());
+        }
+        if (other.viceCaptain) {
+            viceCaptain = GetPlayer(other.viceCaptain->GetName());
+        }
+        
+        // Set up playing XI, batting order, and bowling order
+        for (const auto& player : other.playingXI) {
+            Player* newPlayer = GetPlayer(player->GetName());
+            if (newPlayer) {
+                playingXI.push_back(newPlayer);
+            }
+        }
+        
+        for (const auto& player : other.battingOrder) {
+            Player* newPlayer = GetPlayer(player->GetName());
+            if (newPlayer) {
+                battingOrder.push_back(newPlayer);
+            }
+        }
+        
+        for (const auto& player : other.bowlingOrder) {
+            Player* newPlayer = GetPlayer(player->GetName());
+            if (newPlayer) {
+                bowlingOrder.push_back(newPlayer);
+            }
+        }
+    }
+    return *this;
+}
+
 Team& Team::operator=(Team&& other) noexcept {
     if (this != &other) {
         name = std::move(other.name);

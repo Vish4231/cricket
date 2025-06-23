@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include "Shader.h"
 
 enum class EffectType {
     NONE,
@@ -90,10 +91,10 @@ private:
     GLuint finalTexture;
     
     // Shaders
-    std::unique_ptr<class Shader> postProcessShader;
-    std::unique_ptr<class Shader> blurShader;
-    std::unique_ptr<class Shader> bloomShader;
-    std::unique_ptr<class Shader> colorGradingShader;
+    Shader* postProcessShader;
+    Shader* blurShader;
+    Shader* bloomShader;
+    Shader* colorGradingShader;
     
     // Effects
     struct ActiveEffect {

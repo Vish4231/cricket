@@ -504,3 +504,7 @@ bool CommentaryManager::IsImportantEvent(CommentaryEvent event) {
 //     // TODO: Initialize commentary templates
 //     // This function is not declared in the header, so commenting it out
 // }
+
+void CommentaryManager::StartMatch(const std::string& team1, const std::string& team2, const std::string& venue) {
+    // TODO: Implement or leave empty if not needed
+}

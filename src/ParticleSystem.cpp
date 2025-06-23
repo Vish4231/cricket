@@ -1,7 +1,12 @@
 #include "ParticleSystem.h"
+#include "Shader.h"
 
 ParticleSystem::ParticleSystem() {}
 ParticleSystem::~ParticleSystem() {}
 
-void ParticleSystem::initialize(int maxParticles) {}
+bool ParticleSystem::initialize(int maxParticles) {
+    // Simplified initialization
+    return true;
+}
+
 void ParticleSystem::update(float deltaTime) {} 

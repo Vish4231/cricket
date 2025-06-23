@@ -9,7 +9,6 @@
 #include <string>
 #include <functional>
 #include <map>
-#include "Game.h"
 
 // Forward declarations
 class Game;

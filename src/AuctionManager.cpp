@@ -1,4 +1,5 @@
 #include "AuctionManager.h"
+#include <glad/glad.h>
 #include "AuctionVisualizer.h"
 #include <iostream>
 #include <algorithm>

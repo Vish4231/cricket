@@ -64,6 +64,11 @@ struct AnimationFrame {
     float duration;
 };
 
+struct KeyFrame {
+    float time;
+    glm::mat4 transform;
+};
+
 struct Animation {
     std::string name;
     AnimationType type;
@@ -71,8 +76,10 @@ struct Animation {
     int frameCount;
     std::vector<AnimationFrame> frames;
     bool isLooping;
-    std::vector<std::string> keyframes;
     std::map<std::string, std::function<void()>> events;
+    std::string path;
+    float ticksPerSecond;
+    std::vector<KeyFrame> keyframes;
 };
 
 struct AnimationInstance {
@@ -86,6 +93,7 @@ struct AnimationInstance {
 
 struct Model {
     std::string name;
+    std::string path;
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec2> texCoords;
     std::vector<glm::vec3> normals;
@@ -216,6 +224,16 @@ public:
     void setAnimationEventCallback(const std::string& eventName, std::function<void()> callback);
     
 private:
+    // Animation state
+    Animation* currentAnimation;
+    float animationTime;
+    bool isPlaying;
+    bool loopAnimation;
+    
+    // Model loading helpers
+    std::map<std::string, Model*> loadedModels;
+    std::map<std::string, Animation*> loadedAnimations;
+    
     std::map<std::string, Animation> animations;
     std::vector<AnimationInstance> activeAnimations;
     std::map<std::string, std::function<void()>> eventCallbacks;

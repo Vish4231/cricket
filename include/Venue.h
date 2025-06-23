@@ -8,7 +8,8 @@ enum class VenueType {
     INTERNATIONAL,
     DOMESTIC,
     FRANCHISE,
-    CLUB
+    CLUB,
+    STADIUM
 };
 
 enum class PitchType {

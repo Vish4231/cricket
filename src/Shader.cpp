@@ -1,11 +1,12 @@
 #include "Shader.h"
+#include <glad/glad.h>
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <glm/gtc/type_ptr.hpp>
 
-Shader::Shader() : programID(0) {}
-Shader::~Shader() { if (programID) glDeleteProgram(programID); }
+Shader::Shader() : programId(0) {}
+Shader::~Shader() { if (programId) glDeleteProgram(programId); }
 
 bool Shader::loadFromFiles(const std::string& vertexPath, const std::string& fragmentPath) {
     std::string vertexCode, fragmentCode;
@@ -49,13 +50,13 @@ bool Shader::loadFromFiles(const std::string& vertexPath, const std::string& fra
         return false;
     }
     // Shader Program
-    programID = glCreateProgram();
-    glAttachShader(programID, vertex);
-    glAttachShader(programID, fragment);
-    glLinkProgram(programID);
-    glGetProgramiv(programID, GL_LINK_STATUS, &success);
+    programId = glCreateProgram();
+    glAttachShader(programId, vertex);
+    glAttachShader(programId, fragment);
+    glLinkProgram(programId);
+    glGetProgramiv(programId, GL_LINK_STATUS, &success);
     if (!success) {
-        glGetProgramInfoLog(programID, 512, nullptr, infoLog);
+        glGetProgramInfoLog(programId, 512, nullptr, infoLog);
         std::cerr << "Shader Program linking failed: " << infoLog << std::endl;
         return false;
     }
@@ -64,18 +65,18 @@ bool Shader::loadFromFiles(const std::string& vertexPath, const std::string& fra
     return true;
 }
 
-void Shader::use() const { glUseProgram(programID); }
-void Shader::unuse() const { glUseProgram(0); }
+void Shader::use() { glUseProgram(programId); }
+void Shader::unuse() { glUseProgram(0); }
 
-void Shader::setMat4(const std::string& name, const glm::mat4& mat) const {
-    glUniformMatrix4fv(glGetUniformLocation(programID, name.c_str()), 1, GL_FALSE, glm::value_ptr(mat));
+void Shader::setMat4(const std::string& name, const glm::mat4& value) {
+    glUniformMatrix4fv(glGetUniformLocation(programId, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
 }
-void Shader::setVec3(const std::string& name, const glm::vec3& vec) const {
-    glUniform3fv(glGetUniformLocation(programID, name.c_str()), 1, glm::value_ptr(vec));
+void Shader::setVec3(const std::string& name, const glm::vec3& value) {
+    glUniform3fv(glGetUniformLocation(programId, name.c_str()), 1, glm::value_ptr(value));
 }
-void Shader::setFloat(const std::string& name, float value) const {
-    glUniform1f(glGetUniformLocation(programID, name.c_str()), value);
+void Shader::setFloat(const std::string& name, float value) {
+    glUniform1f(glGetUniformLocation(programId, name.c_str()), value);
 }
-void Shader::setBool(const std::string& name, bool value) const {
-    glUniform1i(glGetUniformLocation(programID, name.c_str()), (int)value);
+void Shader::setBool(const std::string& name, bool value) {
+    glUniform1i(glGetUniformLocation(programId, name.c_str()), (int)value);
 } 

@@ -58,9 +58,9 @@ class Team {
 public:
     // Constructors
     Team(const std::string& name, TeamType type);
-    Team(const Team& other) = delete; // Disable copy constructor
+    Team(const Team& other); // Copy constructor
     Team(Team&& other) noexcept; // Move constructor
-    Team& operator=(const Team& other) = delete; // Disable copy assignment
+    Team& operator=(const Team& other); // Copy assignment
     Team& operator=(Team&& other) noexcept; // Move assignment
     ~Team();
     

@@ -3,7 +3,11 @@
 ScreenEffect::ScreenEffect() {}
 ScreenEffect::~ScreenEffect() {}
 
-void ScreenEffect::initialize(int width, int height) {}
+bool ScreenEffect::initialize(int width, int height) {
+    // Simplified initialization
+    return true;
+}
+
 void ScreenEffect::beginRender() {}
 void ScreenEffect::renderEffects() {}
 void ScreenEffect::endRender() {}

@@ -1,5 +1,5 @@
-#include <GL/glew.h>
 #include "Game.h"
+#include <glad/glad.h>
 #include "Player.h"
 #include "Team.h"
 #include "MatchEngine.h"
@@ -23,7 +23,6 @@
 #include <imgui.h>
 #include <imgui_impl_sdl2.h>
 #include <imgui_impl_opengl3.h>
-#include <glad/glad.h>
 
 Game::Game() 
     : window(nullptr)

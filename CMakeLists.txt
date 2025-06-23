@@ -56,6 +56,7 @@ set(SOURCES
     src/Model.cpp
     src/ParticleSystem.cpp
     src/ScreenEffect.cpp
+    include/glad/glad/src/glad.c
     third_party/imgui/imgui.cpp
     third_party/imgui/imgui_demo.cpp
     third_party/imgui/imgui_draw.cpp
@@ -78,7 +79,7 @@ target_link_libraries(CricketManager
     CURL::libcurl
     nlohmann_json::nlohmann_json
     GLEW::GLEW
-    glm
+    glm::glm
 )
 
 # Include directories for libraries
@@ -86,7 +87,6 @@ target_include_directories(CricketManager PRIVATE
     ${SDL2_INCLUDE_DIRS}
     ${OPENGL_INCLUDE_DIRS}
     ${GLEW_INCLUDE_DIRS}
-    ${GLM_INCLUDE_DIRS}
 )
 
 # Copy assets to build directory
