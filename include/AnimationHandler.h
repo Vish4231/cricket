@@ -9,6 +9,7 @@
 #include <memory>
 #include <map>
 #include <functional>
+#include <glad/glad.h>
 
 // Forward declarations
 class Player;
@@ -214,66 +215,39 @@ public:
     // Callbacks
     void setAnimationEventCallback(const std::string& eventName, std::function<void()> callback);
     
-    // Legacy methods for compatibility
-    void UpdateAllAnimations(float deltaTime);
-    
 private:
+    std::map<std::string, Animation> animations;
+    std::vector<AnimationInstance> activeAnimations;
+    std::map<std::string, std::function<void()>> eventCallbacks;
+    int nextInstanceId;
+    
     // Model loading helpers
-    bool LoadFBXModel(const std::string& filename, Model* model);
-    bool LoadOBJModel(const std::string& filename, Model* model);
-    bool LoadTexture(const std::string& filename, GLuint& texture);
+    GLuint defaultVAO;
+    GLuint defaultVBO;
+    bool isInitialized;
     
-    // Animation helpers
-    void CalculateBoneTransforms(const std::string& playerName, float time);
-    glm::mat4 InterpolateTransforms(const glm::mat4& start, const glm::mat4& end, float factor);
-    void ApplyBoneTransforms(const std::string& playerName);
-    
-    // Rendering helpers
-    void SetupShader(const std::string& shaderName);
-    void RenderModel(const Model* model, const glm::mat4& transform);
-    void RenderBones(const Model* model);
-    
-    // Camera and view
-    glm::vec3 cameraPosition;
-    glm::vec3 cameraTarget;
-    glm::vec3 cameraUp;
-    glm::mat4 viewMatrix;
-    glm::mat4 projectionMatrix;
-    
-    // Lighting
-    glm::vec3 ambientLight;
-    glm::vec3 directionalLight;
-    glm::vec3 pointLight;
-    float ambientIntensity;
-    float directionalIntensity;
-    float pointIntensity;
-    float pointRange;
-    
-    // Shaders
-    std::map<std::string, GLuint> shaders;
-    std::string currentShader;
+    // Performance optimization
+    bool frustumCulling;
+    bool levelOfDetail;
+    int maxVisiblePlayers;
     
     // Models and players
     std::map<std::string, Model> models;
     std::map<std::string, PlayerModel> playerModels;
     
-    // Animation data
-    std::map<std::string, std::function<void(AnimationType, int)>> animationCallbacks;
+    // Camera and lighting
+    glm::vec3 cameraPosition;
+    glm::vec3 cameraTarget;
+    glm::vec3 cameraUp;
+    glm::vec3 ambientLight;
+    float ambientIntensity;
+    glm::vec3 directionalLightDir;
+    glm::vec3 directionalLightColor;
+    float directionalIntensity;
     
-    // Performance settings
-    bool frustumCulling;
-    bool levelOfDetail;
-    int maxVisiblePlayers;
-    
-    // OpenGL state
-    GLuint defaultVAO;
-    GLuint defaultVBO;
-    bool isInitialized;
-    
-    std::map<std::string, Animation> animations;
-    std::vector<AnimationInstance> activeAnimations;
-    std::map<std::string, std::function<void()>> eventCallbacks;
-    int nextInstanceId;
+    // Shaders
+    std::map<std::string, GLuint> shaders;
+    std::string currentShader;
     
     void updateAnimationInstance(AnimationInstance& instance, float deltaTime);
     void triggerAnimationEvent(const std::string& eventName);

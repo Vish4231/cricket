@@ -128,14 +128,32 @@ public:
     // Basic info
     const std::string& GetName() const { return name; }
     int GetAge() const { return age; }
-    PlayerRole GetRole() const { return role; }
-    BattingStyle GetBattingStyle() const { return battingStyle; }
-    BowlingStyle GetBowlingStyle() const { return bowlingStyle; }
+    const std::string& GetNationality() const { return nationality; }
+    PlayerRole GetPlayerRole() const { return role; }
+    const std::string& GetRole() const { return roleString; }
+    const std::string& GetBattingStyle() const { return battingStyleString; }
+    const std::string& GetBowlingStyle() const { return bowlingStyleString; }
+    const std::string& GetTeam() const { return team; }
+    const std::string& GetPhoto() const { return photo; }
+    float GetBattingSkill() const { return battingSkill; }
+    float GetBowlingSkill() const { return bowlingSkill; }
+    float GetFieldingSkill() const { return fieldingSkill; }
+    float GetExperience() const { return experience; }
+    float GetFitness() const { return fitness; }
+    int GetMorale() const { return morale; }
+    float GetSalary() const { return salary; }
+    float GetMarketValue() const { return marketValue; }
+    const std::map<std::string, float>& GetStats() const { return statsMap; }
+    const std::map<std::string, std::string>& GetAttributes() const { return attributesMap; }
+    const std::vector<std::string>& GetSpecialties() const { return specialties; }
+    const std::vector<std::string>& GetAchievements() const { return achievements; }
+    int GetForm() const { return form; }
+    const std::map<std::string, std::string>& GetPreferences() const { return preferences; }
     
     // Stats and attributes
-    const PlayerStats& GetStats() const { return stats; }
-    const PlayerAttributes& GetAttributes() const { return attributes; }
-    PlayerAttributes& GetAttributes() { return attributes; }
+    const PlayerStats& GetPlayerStats() const { return stats; }
+    const PlayerAttributes& GetPlayerAttributes() const { return attributes; }
+    PlayerAttributes& GetPlayerAttributes() { return attributes; }
     
     // Team and contract
     const std::string& GetCurrentTeam() const { return currentTeam; }
@@ -156,10 +174,11 @@ public:
     // Specialties
     void AddSpecialty(PlayerSpecialty specialty);
     bool HasSpecialty(PlayerSpecialty specialty) const;
+    void AddSpecialtyString(const std::string& specialty);
+    bool HasSpecialtyString(const std::string& specialty) const;
     
     // Career
     void AddAchievement(const std::string& achievement);
-    const std::vector<std::string>& GetAchievements() const { return achievements; }
     
     // Rating calculation
     int GetOverallRating() const;
@@ -169,9 +188,7 @@ public:
     
     // Form and morale
     void UpdateForm(int formChange);
-    int GetForm() const { return form; }
     void UpdateMorale(int moraleChange);
-    int GetMorale() const { return morale; }
     
     // JSON serialization
     std::string ToJSON() const;
@@ -181,13 +198,32 @@ private:
     // Basic info
     std::string name;
     int age;
+    std::string nationality;
     PlayerRole role;
+    std::string roleString;
     BattingStyle battingStyle;
+    std::string battingStyleString;
     BowlingStyle bowlingStyle;
+    std::string bowlingStyleString;
+    std::string team;
+    std::string photo;
+    
+    // Skills and attributes
+    float battingSkill;
+    float bowlingSkill;
+    float fieldingSkill;
+    float experience;
+    float fitness;
+    int form;
+    int morale;
+    float salary;
+    float marketValue;
     
     // Stats and attributes
     PlayerStats stats;
     PlayerAttributes attributes;
+    std::map<std::string, float> statsMap;
+    std::map<std::string, std::string> attributesMap;
     
     // Team and contract
     std::string currentTeam;
@@ -197,12 +233,12 @@ private:
     std::vector<Injury> injuries;
     
     // Specialties and achievements
-    std::vector<PlayerSpecialty> specialties;
+    std::vector<PlayerSpecialty> playerSpecialties;
+    std::vector<std::string> specialties;
     std::vector<std::string> achievements;
     
-    // Form and morale (1-100)
-    int form;
-    int morale;
+    // Preferences
+    std::map<std::string, std::string> preferences;
     
     // Helper methods
     void InitializeAttributes();

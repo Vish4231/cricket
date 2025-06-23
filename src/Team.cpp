@@ -42,6 +42,73 @@ Team::Team(const std::string& name, TeamType type)
 Team::~Team() {
 }
 
+Team::Team(Team&& other) noexcept
+    : name(std::move(other.name))
+    , type(other.type)
+    , city(std::move(other.city))
+    , owner(std::move(other.owner))
+    , founded(other.founded)
+    , colors(std::move(other.colors))
+    , logo(std::move(other.logo))
+    , budget(other.budget)
+    , trophyCount(other.trophyCount)
+    , trophies(std::move(other.trophies))
+    , settings(std::move(other.settings))
+    , stats(std::move(other.stats))
+    , statsMap(std::move(other.statsMap))
+    , teamRating(other.teamRating)
+    , squad(std::move(other.squad))
+    , playingXI(std::move(other.playingXI))
+    , coach(std::move(other.coach))
+    , manager(std::move(other.manager))
+    , captain(other.captain)
+    , viceCaptain(other.viceCaptain)
+    , homeVenue(std::move(other.homeVenue))
+    , currentFormation(other.currentFormation)
+    , battingOrder(std::move(other.battingOrder))
+    , bowlingOrder(std::move(other.bowlingOrder))
+    , fieldingPositions(std::move(other.fieldingPositions))
+    , matchStrategy(std::move(other.matchStrategy))
+    , finances(std::move(other.finances))
+    , morale(std::move(other.morale))
+    , youthPlayers(std::move(other.youthPlayers)) {
+}
+
+Team& Team::operator=(Team&& other) noexcept {
+    if (this != &other) {
+        name = std::move(other.name);
+        type = other.type;
+        city = std::move(other.city);
+        owner = std::move(other.owner);
+        founded = other.founded;
+        colors = std::move(other.colors);
+        logo = std::move(other.logo);
+        budget = other.budget;
+        trophyCount = other.trophyCount;
+        trophies = std::move(other.trophies);
+        settings = std::move(other.settings);
+        stats = std::move(other.stats);
+        statsMap = std::move(other.statsMap);
+        teamRating = other.teamRating;
+        squad = std::move(other.squad);
+        playingXI = std::move(other.playingXI);
+        coach = std::move(other.coach);
+        manager = std::move(other.manager);
+        captain = other.captain;
+        viceCaptain = other.viceCaptain;
+        homeVenue = std::move(other.homeVenue);
+        currentFormation = other.currentFormation;
+        battingOrder = std::move(other.battingOrder);
+        bowlingOrder = std::move(other.bowlingOrder);
+        fieldingPositions = std::move(other.fieldingPositions);
+        matchStrategy = std::move(other.matchStrategy);
+        finances = std::move(other.finances);
+        morale = std::move(other.morale);
+        youthPlayers = std::move(other.youthPlayers);
+    }
+    return *this;
+}
+
 void Team::AddPlayer(std::unique_ptr<Player> player) {
     if (player) {
         player->SetCurrentTeam(name);
@@ -204,7 +271,7 @@ void Team::CalculateTeamRating() {
     
     // Bonus for captain
     if (captain) {
-        teamRating += captain->GetAttributes().leadership / 20;
+        teamRating += captain->GetPlayerAttributes().leadership / 20;
     }
 }
 
@@ -319,8 +386,8 @@ void Team::PrepareForMatch() {
     if (bowlingOrder.empty() && !playingXI.empty()) {
         // Find bowlers in playing XI
         for (Player* player : playingXI) {
-            if (player->GetRole() == PlayerRole::BOWLER || 
-                player->GetRole() == PlayerRole::ALL_ROUNDER) {
+            if (player->GetPlayerRole() == PlayerRole::BOWLER || 
+                player->GetPlayerRole() == PlayerRole::ALL_ROUNDER) {
                 bowlingOrder.push_back(player);
             }
         }
@@ -333,7 +400,7 @@ void Team::UpdatePlayerFitness() {
         
         // Simulate fitness recovery
         if (!player->IsInjured()) {
-            auto& attributes = player->GetAttributes();
+            auto& attributes = player->GetPlayerAttributes();
             attributes.fitness = std::min(100, attributes.fitness + 5);
             attributes.stamina = std::min(100, attributes.stamina + 3);
         }
@@ -351,13 +418,13 @@ void Team::CalculateTeamChemistry() {
     // Bonus for players who have been together longer
     // Bonus for captain's leadership
     if (captain) {
-        baseChemistry += captain->GetAttributes().leadership / 10;
+        baseChemistry += captain->GetPlayerAttributes().leadership / 10;
     }
     
     // Penalty for too many new players
     int newPlayers = 0;
     for (const auto& player : squad) {
-        if (player->GetAttributes().experience < 30) {
+        if (player->GetPlayerAttributes().experience < 30) {
             newPlayers++;
         }
     }

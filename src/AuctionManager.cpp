@@ -78,16 +78,16 @@ void AuctionManager::createAuctionSession(const std::string& name, AuctionType t
 void AuctionManager::addTeams(const std::vector<Team*>& teams) {
     for (const auto& team : teams) {
         TeamBudget budget;
-        budget.teamName = team->getName();
-        budget.totalBudget = team->getBudget();
+        budget.teamName = team->GetName();
+        budget.totalBudget = team->GetBudget();
         budget.spentAmount = 0.0f;
-        budget.remainingBudget = team->getBudget();
+        budget.remainingBudget = team->GetBudget();
         budget.playersBought = 0;
         budget.maxPlayers = 25;
         budget.strategy = BiddingStrategy::BALANCED;
         budget.aggressionLevel = 0.5f;
         
-        teamBudgets[team->getName()] = budget;
+        teamBudgets[team->GetName()] = budget;
         currentSession.teamBudgets.push_back(budget);
     }
     
@@ -98,7 +98,7 @@ void AuctionManager::addPlayers(const std::vector<Player*>& players) {
     for (const auto& player : players) {
         AuctionLot lot;
         lot.player = player;
-        lot.basePrice = calculateBasePrice(player);
+        lot.basePrice = calculatePlayerValue(player);
         lot.reservePrice = lot.basePrice * 0.8f;
         lot.currentBid = 0.0f;
         lot.isSold = false;
@@ -298,7 +298,7 @@ void AuctionManager::skipLot() {
     currentLot.isUnsold = true;
     currentSession.unsoldPlayers++;
     
-    std::cout << "Lot skipped: " << currentLot.player->getName() << std::endl;
+    std::cout << "Lot skipped: " << currentLot.player->GetName() << std::endl;
     
     nextLot();
 }
@@ -307,7 +307,7 @@ void AuctionManager::unsoldLot() {
     currentLot.isUnsold = true;
     currentSession.unsoldPlayers++;
     
-    std::cout << "Lot unsold: " << currentLot.player->getName() << std::endl;
+    std::cout << "Lot unsold: " << currentLot.player->GetName() << std::endl;
     
     nextLot();
 }
@@ -578,14 +578,14 @@ float AuctionManager::calculatePlayerValue(const Player* player) const {
     float value = 50.0f; // Base value
     
     // Add value based on skills
-    value += player->getBattingSkill() * 0.5f;
-    value += player->getBowlingSkill() * 0.5f;
-    value += player->getFieldingSkill() * 0.3f;
-    value += player->getExperience() * 0.2f;
+    value += player->GetBattingSkill() * 0.5f;
+    value += player->GetBowlingSkill() * 0.5f;
+    value += player->GetFieldingSkill() * 0.3f;
+    value += player->GetExperience() * 0.2f;
     
     // Adjust for age
-    if (player->getAge() < 25) value *= 1.2f;
-    else if (player->getAge() > 35) value *= 0.8f;
+    if (player->GetAge() < 25) value *= 1.2f;
+    else if (player->GetAge() > 35) value *= 0.8f;
     
     return value;
 }
@@ -594,7 +594,7 @@ float AuctionManager::calculateMarketDemand(const Player* player) const {
     if (!player) return 1.0f;
     
     // Simple demand calculation based on player role
-    std::string role = player->getRole();
+    std::string role = player->GetRole();
     if (role == "All-rounder") return 1.5f;
     if (role == "Batsman") return 1.3f;
     if (role == "Bowler") return 1.2f;
@@ -662,10 +662,10 @@ void AuctionManager::onBidWon(const std::string& teamName, float finalBid) {
     
     // Trigger callbacks
     if (lotSoldCallback) {
-        lotSoldCallback(currentLot.player->getName(), teamName, finalBid);
+        lotSoldCallback(currentLot.player->GetName(), teamName, finalBid);
     }
     
-    std::cout << "Player sold: " << currentLot.player->getName() << " to " << teamName << " for " << finalBid << " lakhs" << std::endl;
+    std::cout << "Player sold: " << currentLot.player->GetName() << " to " << teamName << " for " << finalBid << " lakhs" << std::endl;
     
     // Move to next lot
     nextLot();

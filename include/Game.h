@@ -36,14 +36,31 @@ public:
     void processInput();
     
     // State management
+    enum class MatchFormat {
+        TEST,
+        ODI,
+        T20
+    };
+
     enum class GameState {
-        MainMenu,
-        TeamManagement,
-        MatchSimulation,
-        Auction,
-        Career,
-        Settings,
-        Exit
+        MENU,
+        MAIN_MENU,
+        TEAM_MANAGEMENT,
+        MATCH_SETUP,
+        MATCH_IN_PROGRESS,
+        AUCTION,
+        CAREER,
+        SETTINGS,
+        PLAYING,
+        PAUSED,
+        EXIT
+    };
+
+    enum class VisualQuality {
+        LOW,
+        MEDIUM,
+        HIGH,
+        ULTRA
     };
     
     void setState(GameState newState);
@@ -105,6 +122,14 @@ public:
     GameStats getStats() const { return stats; }
     void exportStats(const std::string& filename);
 
+    // Getters
+    SDL_Window* GetWindow() const { return window; }
+    SDL_GLContext GetGLContext() const { return glContext; }
+    int GetWindowWidth() const { return windowWidth; }
+    int GetWindowHeight() const { return windowHeight; }
+    GameState GetCurrentState() const { return currentState; }
+    bool IsRunning() const { return isRunning; }
+
 private:
     // SDL and OpenGL
     SDL_Window* window;
@@ -161,6 +186,7 @@ private:
     bool initializeOpenGL();
     bool initializeImGui();
     void updateDeltaTime();
+    void UpdateGameState(float deltaTime);
     void renderMainMenu();
     void renderTeamManagement();
     void renderMatchSimulation();

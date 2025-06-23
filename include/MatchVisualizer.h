@@ -14,76 +14,48 @@
 #include "MatchEngine.h"
 
 // Forward declarations
+struct Model;
 class Shader;
-class Model;
 class Texture;
+class ParticleSystem;
+class ScreenEffect;
 
 enum class CameraMode {
-    BROADCAST,      // TV-style camera
-    PLAYER_FOLLOW,  // Follow specific player
-    BALL_FOLLOW,    // Follow the ball
-    FIELD_VIEW,     // Wide field view
-    BOWLER_VIEW,    // From bowler's perspective
-    BATSMAN_VIEW,   // From batsman's perspective
-    UMPIRE_VIEW,    // From umpire's perspective
-    DRONE_VIEW      // Aerial view
+    FOLLOW_BALL,
+    FOLLOW_BATSMAN,
+    FOLLOW_BOWLER,
+    FIELD_VIEW,
+    BIRD_EYE,
+    CLOSE_UP,
+    REPLAY
 };
 
-enum class VisualQuality {
-    LOW,
-    MEDIUM,
-    HIGH,
-    ULTRA
+enum class WeatherCondition {
+    CLEAR,
+    CLOUDY,
+    RAIN,
+    OVERCAST,
+    WINDY
 };
 
-struct PlayerModel {
-    std::string playerId;
-    glm::vec3 position;
-    glm::vec3 rotation;
-    glm::vec3 scale;
-    std::string currentAnimation;
-    float animationTime;
-    bool isVisible;
-    int teamId;
-    std::string role; // batsman, bowler, fielder, wicket-keeper
+enum class TimeOfDay {
+    MORNING,
+    AFTERNOON,
+    EVENING,
+    NIGHT
 };
 
-struct BallModel {
-    glm::vec3 position;
-    glm::vec3 velocity;
-    glm::vec3 acceleration;
-    float spin;
-    float seam;
-    bool isVisible;
-    float bounceHeight;
-    float trajectoryCurve;
-};
-
-struct FieldModel {
-    glm::vec3 pitchPosition;
-    glm::vec3 pitchSize;
-    glm::vec3 boundarySize;
-    std::vector<glm::vec3> fieldingPositions;
-    std::vector<glm::vec3> boundaryRopes;
-    std::vector<glm::vec3> sightScreens;
-    glm::vec3 umpirePosition;
-};
-
-struct Camera {
+struct CameraSettings {
     glm::vec3 position;
     glm::vec3 target;
     glm::vec3 up;
     float fov;
     float nearPlane;
     float farPlane;
-    float aspectRatio;
-    CameraMode mode;
-    float transitionTime;
-    glm::vec3 targetPosition;
-    glm::vec3 targetTarget;
+    float transitionSpeed;
 };
 
-struct Lighting {
+struct LightingSettings {
     glm::vec3 ambientColor;
     glm::vec3 directionalColor;
     glm::vec3 directionalDirection;
@@ -93,24 +65,15 @@ struct Lighting {
     float shadowBias;
 };
 
-struct WeatherEffects {
-    bool isRaining;
+struct WeatherSettings {
+    WeatherCondition condition;
     float rainIntensity;
-    bool isOvercast;
-    float cloudCover;
-    float windStrength;
-    glm::vec3 windDirection;
+    float windSpeed;
+    float windDirection;
+    float temperature;
+    float humidity;
+    bool fogEnabled;
     float fogDensity;
-    glm::vec3 fogColor;
-};
-
-struct AnimationState {
-    std::string name;
-    float duration;
-    float currentTime;
-    bool isLooping;
-    bool isComplete;
-    std::function<void(float)> updateCallback;
 };
 
 class MatchVisualizer {
@@ -124,8 +87,8 @@ public:
     
     // Setup
     void setupMatch(Team* team1, Team* team2, Venue* venue, MatchType matchType);
-    void setVisualQuality(VisualQuality quality);
-    void setCameraMode(CameraMode mode);
+    void setWeather(WeatherCondition condition);
+    void setTimeOfDay(TimeOfDay time);
     
     // Rendering
     void render(float deltaTime);
@@ -133,40 +96,25 @@ public:
     void renderPlayers();
     void renderBall();
     void renderUI();
-    void renderEffects();
     
     // Camera control
+    void setCameraMode(CameraMode mode);
     void setCameraPosition(const glm::vec3& position);
     void setCameraTarget(const glm::vec3& target);
-    void transitionCamera(const glm::vec3& newPosition, const glm::vec3& newTarget, float duration);
-    void followPlayer(const std::string& playerId);
-    void followBall();
-    void resetCamera();
+    void setCameraFOV(float fov);
+    void setCameraTransitionSpeed(float speed);
+    void shakeCamera(float intensity, float duration);
     
     // Player management
-    void updatePlayerPosition(const std::string& playerId, const glm::vec3& position);
-    void updatePlayerAnimation(const std::string& playerId, const std::string& animation);
-    void setPlayerVisibility(const std::string& playerId, bool visible);
-    void highlightPlayer(const std::string& playerId, const glm::vec3& color);
-    
-    // Ball physics
-    void setBallPosition(const glm::vec3& position);
-    void setBallVelocity(const glm::vec3& velocity);
-    void setBallSpin(float spin);
-    void setBallSeam(float seam);
-    void animateBallTrajectory(const std::vector<glm::vec3>& trajectory, float duration);
-    void showBallTrail(bool show);
-    
-    // Field management
-    void setFieldingPositions(const std::map<std::string, FieldingPosition>& positions);
-    void updatePitchConditions(const PitchConditions& conditions);
-    void updateWeatherConditions(const WeatherConditions& conditions);
+    void updatePlayerPosition(const std::string& playerName, const glm::vec3& position);
+    void updatePlayerAnimation(const std::string& playerName, const std::string& animation);
+    void updateBallPosition(const glm::vec3& position);
+    void updateBallTrajectory(const std::vector<glm::vec3>& trajectory);
     
     // Effects
     void addParticleEffect(const glm::vec3& position, const std::string& effectType);
     void addScreenEffect(const std::string& effectType, float duration);
-    void setSlowMotion(bool enabled, float speed = 0.5f);
-    void setReplayMode(bool enabled);
+    void setLighting(const LightingSettings& settings);
     
     // Match events
     void onBallBowled(const BallEvent& event);
@@ -190,15 +138,14 @@ public:
     void setTextureQuality(int quality);
     
     // Getters
-    Camera getCamera() const { return camera; }
-    const std::vector<PlayerModel>& getPlayerModels() const { return playerModels; }
-    const BallModel& getBallModel() const { return ball; }
-    const FieldModel& getFieldModel() const { return field; }
+    CameraMode getCurrentCameraMode() const { return currentCameraMode; }
+    const CameraSettings& getCameraSettings() const { return cameraSettings; }
+    const LightingSettings& getLightingSettings() const { return lightingSettings; }
+    const WeatherSettings& getWeatherSettings() const { return weatherSettings; }
     
     // Callbacks
-    void setBallEventCallback(std::function<void(const BallEvent&)> callback);
-    void setCameraChangeCallback(std::function<void(CameraMode)> callback);
-    void setReplayCallback(std::function<void()> callback);
+    void setCameraChangedCallback(std::function<void(CameraMode)> callback);
+    void setPlayerClickedCallback(std::function<void(const std::string&)> callback);
 
 private:
     // OpenGL and rendering
@@ -222,31 +169,30 @@ private:
     std::map<std::string, std::unique_ptr<Texture>> textures;
     
     // Game objects
-    std::vector<PlayerModel> playerModels;
-    BallModel ball;
-    FieldModel field;
-    Camera camera;
-    Lighting lighting;
-    WeatherEffects weather;
-    
-    // Match data
     Team* team1;
     Team* team2;
     Venue* venue;
     MatchType matchType;
     MatchEngine* matchEngine;
     
-    // Animation
-    std::map<std::string, AnimationState> animations;
-    float globalTime;
-    float slowMotionSpeed;
-    bool slowMotionEnabled;
+    // Camera system
+    CameraMode currentCameraMode;
+    CameraSettings cameraSettings;
+    glm::mat4 viewMatrix;
+    glm::mat4 projectionMatrix;
+    float cameraShakeIntensity;
+    float cameraShakeDuration;
+    float cameraShakeTimer;
     
-    // Effects
-    std::vector<std::unique_ptr<class ParticleSystem>> particleSystems;
-    std::vector<std::unique_ptr<class ScreenEffect>> screenEffects;
-    bool ballTrailEnabled;
-    std::vector<glm::vec3> ballTrail;
+    // Lighting system
+    LightingSettings lightingSettings;
+    GLuint shadowMap;
+    GLuint shadowFBO;
+    
+    // Weather system
+    WeatherSettings weatherSettings;
+    GLuint rainTexture;
+    GLuint cloudTexture;
     
     // UI state
     bool scoreboardVisible;
@@ -256,16 +202,14 @@ private:
     bool replayControlsVisible;
     
     // Performance settings
-    VisualQuality visualQuality;
     int targetFrameRate;
     bool vsyncEnabled;
     int shadowQuality;
     int textureQuality;
     
     // Callbacks
-    std::function<void(const BallEvent&)> ballEventCallback;
-    std::function<void(CameraMode)> cameraChangeCallback;
-    std::function<void()> replayCallback;
+    std::function<void(CameraMode)> cameraChangedCallback;
+    std::function<void(const std::string&)> playerClickedCallback;
     
     // Helper methods
     bool initializeShaders();
@@ -277,42 +221,23 @@ private:
     void setupPlayers();
     
     void updateCamera(float deltaTime);
-    void updateAnimations(float deltaTime);
+    void updateLighting();
+    void updateWeather(float deltaTime);
     void updateParticles(float deltaTime);
-    void updateEffects(float deltaTime);
-    
-    void renderPlayer(const PlayerModel& player);
-    void renderBallTrail();
-    void renderParticles();
-    void renderShadows();
-    void renderPostProcess();
-    
-    glm::mat4 getViewMatrix() const;
-    glm::mat4 getProjectionMatrix() const;
-    glm::mat4 getModelMatrix(const glm::vec3& position, const glm::vec3& rotation, const glm::vec3& scale) const;
-    
-    void calculateFieldingPositions();
-    void updateWeatherEffects();
-    void applyLightingEffects();
-    
-    // Physics helpers
-    glm::vec3 calculateBallTrajectory(const glm::vec3& start, const glm::vec3& velocity, float time);
-    float calculateBounceHeight(float initialHeight, float velocity, float time);
-    glm::vec3 calculateSpinEffect(const glm::vec3& velocity, float spin, float time);
-    
-    // Animation helpers
-    void playAnimation(const std::string& playerId, const std::string& animationName, bool loop = false);
-    void stopAnimation(const std::string& playerId);
-    void updatePlayerAnimation(const std::string& playerId, float deltaTime);
-    
-    // Camera helpers
-    void updateCameraTransition(float deltaTime);
-    void calculateCameraPosition(CameraMode mode);
-    void smoothCameraMovement(const glm::vec3& targetPos, const glm::vec3& targetLook, float speed);
-    
-    // Utility
-    glm::vec3 worldToScreen(const glm::vec3& worldPos) const;
-    glm::vec3 screenToWorld(const glm::vec2& screenPos, float depth) const;
-    float distanceToCamera(const glm::vec3& position) const;
-    bool isInViewFrustum(const glm::vec3& position, float radius) const;
+    void updateScreenEffects(float deltaTime);
+    void renderFieldGeometry();
+    void renderPlayerGeometry();
+    void renderBallGeometry();
+    void renderWeatherEffects();
+    void renderParticleEffects();
+    void renderScreenEffects();
+    void renderUIElements();
+    void setupShaders();
+    void setupModels();
+    void setupTextures();
+    void setupFramebuffers();
+    void calculateMatrices();
+    void applyCameraShake();
+    void generateShadowMap();
+    void renderToShadowMap();
 }; 

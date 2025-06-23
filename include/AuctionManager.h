@@ -222,4 +222,5 @@ private:
     void triggerCallbacks();
     std::string formatCurrency(float amount) const;
     std::string formatTime(int seconds) const;
+    void onBidWon(const std::string& teamName, float finalBid);
 }; 

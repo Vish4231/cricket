@@ -23,6 +23,7 @@
 #include <imgui.h>
 #include <imgui_impl_sdl2.h>
 #include <imgui_impl_opengl3.h>
+#include <glad/glad.h>
 
 Game::Game() 
     : window(nullptr)
@@ -30,8 +31,8 @@ Game::Game()
     , windowWidth(1280)
     , windowHeight(720)
     , isRunning(false)
-    , currentState(GameState::MainMenu)
-    , previousState(GameState::MainMenu)
+    , currentState(GameState::MAIN_MENU)
+    , previousState(GameState::MAIN_MENU)
     , currentTeam1(nullptr)
     , currentTeam2(nullptr)
     , currentVenue(nullptr)
@@ -96,8 +97,8 @@ bool Game::initialize(const std::string& windowTitle, int width, int height) {
     }
     
     // Initialize subsystems
-    if (!guiManager->initialize(window, glContext)) {
-        std::cerr << "Failed to initialize GUI Manager" << std::endl;
+    if (!guiManager->Initialize()) {
+        std::cerr << "Failed to initialize GUI manager" << std::endl;
         return false;
     }
     
@@ -137,7 +138,7 @@ void Game::cleanup() {
     }
     
     if (guiManager) {
-        guiManager->cleanup();
+        guiManager->Shutdown();
     }
     
     if (matchVisualizer) {
@@ -191,78 +192,68 @@ void Game::run() {
 void Game::update(float deltaTime) {
     // Update subsystems
     if (matchEngine) {
-        matchEngine->update(deltaTime);
+        matchEngine->Update(deltaTime);
     }
     
     if (animationHandler) {
-        animationHandler->update(deltaTime);
+        animationHandler->Update(deltaTime);
     }
     
     if (commentaryManager) {
-        commentaryManager->update(deltaTime);
+        commentaryManager->Update(deltaTime);
     }
     
-    // Update MatchVisualizer
-    if (matchVisualizer && currentState == GameState::MatchSimulation) {
-        // Update visualizer with match events
-        const auto& ballHistory = matchEngine->GetBallHistory();
-        if (!ballHistory.empty()) {
-            const auto& lastEvent = ballHistory.back();
-            
-            // Update ball position based on match events
-            if (lastEvent.result == BallResult::FOUR || lastEvent.result == BallResult::SIX) {
-                matchVisualizer->onBoundary(lastEvent);
-            } else if (lastEvent.result == BallResult::WICKET) {
-                matchVisualizer->onWicket(lastEvent);
-            } else if (lastEvent.runs > 0) {
-                matchVisualizer->onBallHit(lastEvent);
-            } else {
-                matchVisualizer->onBallBowled(lastEvent);
-            }
-        }
+    if (auctionManager) {
+        auctionManager->update(deltaTime);
     }
     
-    // Update GUI
     if (guiManager) {
-        guiManager->update(deltaTime);
+        guiManager->Update(deltaTime);
     }
     
-    // Handle state transitions
-    handleStateTransition();
+    // Update match visualizer if match is in progress
+    if (matchInProgress && matchVisualizer) {
+        matchVisualizer->render(deltaTime);
+    }
+    
+    // Update game state
+    UpdateGameState(deltaTime);
+}
+
+void Game::UpdateGameState(float deltaTime) {
+    // Update game state based on current state
+    switch (currentState) {
+        case GameState::MENU:
+            // Handle menu updates
+            break;
+        case GameState::PLAYING:
+            // Handle playing state updates
+            break;
+        case GameState::PAUSED:
+            // Handle paused state updates
+            break;
+        case GameState::SETTINGS:
+            // Handle settings updates
+            break;
+        case GameState::EXIT:
+            isRunning = false;
+            break;
+    }
 }
 
 void Game::render() {
-    // Clear the screen
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    // Clear screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     
-    // Render based on current state
-    switch (currentState) {
-        case GameState::MainMenu:
-            renderMainMenu();
-            break;
-        case GameState::TeamManagement:
-            renderTeamManagement();
-            break;
-        case GameState::MatchSimulation:
-            renderMatchSimulation();
-            break;
-        case GameState::Auction:
-            renderAuction();
-            break;
-        case GameState::Career:
-            renderCareer();
-            break;
-        case GameState::Settings:
-            renderSettings();
-            break;
-        default:
-            break;
+    // Render match visualizer if match is in progress
+    if (matchInProgress && matchVisualizer) {
+        matchVisualizer->render(deltaTime);
     }
     
-    // Render GUI on top
+    // Render GUI
     if (guiManager) {
-        guiManager->render();
+        guiManager->Render();
     }
     
     // Swap buffers
@@ -287,10 +278,10 @@ void Game::handleEvents() {
                 break;
             case SDL_KEYDOWN:
                 if (event.key.keysym.sym == SDLK_ESCAPE) {
-                    if (currentState == GameState::MainMenu) {
-                        setState(GameState::Exit);
+                    if (currentState == GameState::MAIN_MENU) {
+                        setState(GameState::EXIT);
                     } else {
-                        setState(GameState::MainMenu);
+                        setState(GameState::MAIN_MENU);
                     }
                 }
                 break;
@@ -304,22 +295,22 @@ void Game::processInput() {
     
     // Handle global shortcuts
     if (state[SDL_SCANCODE_F1]) {
-        setState(GameState::MainMenu);
+        setState(GameState::MAIN_MENU);
     }
     if (state[SDL_SCANCODE_F2]) {
-        setState(GameState::TeamManagement);
+        setState(GameState::TEAM_MANAGEMENT);
     }
     if (state[SDL_SCANCODE_F3]) {
-        setState(GameState::MatchSimulation);
+        setState(GameState::MATCH_SETUP);
     }
     if (state[SDL_SCANCODE_F4]) {
-        setState(GameState::Auction);
+        setState(GameState::AUCTION);
     }
     if (state[SDL_SCANCODE_F5]) {
-        setState(GameState::Career);
+        setState(GameState::CAREER);
     }
     if (state[SDL_SCANCODE_F6]) {
-        setState(GameState::Settings);
+        setState(GameState::SETTINGS);
     }
 }
 
@@ -412,51 +403,59 @@ void Game::startMatch(Team& team1, Team& team2, Venue& venue, MatchFormat format
     currentTeam2 = &team2;
     currentVenue = &venue;
     currentMatchFormat = format;
-    matchInProgress = true;
     
     // Initialize match engine
     if (matchEngine) {
-        matchEngine->InitializeMatch(&team1, &team2, &venue, 
-            (format == MatchFormat::T20) ? MatchType::T20 : 
-            (format == MatchFormat::ODI) ? MatchType::ODI : MatchType::TEST);
+        MatchType matchType;
+        switch (format) {
+            case MatchFormat::T20:
+                matchType = MatchType::T20;
+                break;
+            case MatchFormat::ODI:
+                matchType = MatchType::ODI;
+                break;
+            default:
+                matchType = MatchType::TEST;
+                break;
+        }
+        
+        matchEngine->InitializeMatch(&team1, &team2, &venue, matchType);
     }
     
-    // Setup match visualizer
+    // Initialize match visualizer
     if (matchVisualizer) {
         matchVisualizer->setupMatch(&team1, &team2, &venue, 
             (format == MatchFormat::T20) ? MatchType::T20 : 
             (format == MatchFormat::ODI) ? MatchType::ODI : MatchType::TEST);
-        
-        // Set initial camera mode
-        matchVisualizer->setCameraMode(CameraMode::BROADCAST);
     }
     
-    // Set up commentary
+    // Initialize commentary
     if (commentaryManager) {
-        commentaryManager->startMatch(team1.getName(), team2.getName(), venue.getName());
+        commentaryManager->StartMatch(team1.GetName(), team2.GetName(), venue.GetName());
     }
     
-    setState(GameState::MatchSimulation);
+    // Set game state
+    setState(GameState::MATCH_IN_PROGRESS);
+    matchInProgress = true;
     
-    std::cout << "Match started: " << team1.getName() << " vs " << team2.getName() 
-              << " at " << venue.getName() << std::endl;
+    std::cout << "Match started: " << team1.GetName() << " vs " << team2.GetName() << std::endl;
 }
 
 void Game::pauseMatch() {
-    if (matchEngine) {
-        matchEngine->pauseMatch();
+    if (matchEngine && matchInProgress) {
+        matchEngine->PauseMatch();
     }
 }
 
 void Game::resumeMatch() {
-    if (matchEngine) {
-        matchEngine->resumeMatch();
+    if (matchEngine && matchInProgress) {
+        matchEngine->ResumeMatch();
     }
 }
 
 void Game::endMatch() {
-    if (matchEngine) {
-        matchEngine->endMatch();
+    if (matchEngine && matchInProgress) {
+        matchEngine->EndMatch();
     }
     
     matchInProgress = false;
@@ -467,7 +466,7 @@ void Game::endMatch() {
     // Update stats
     stats.matchesPlayed++;
     
-    setState(GameState::MainMenu);
+    setState(GameState::MAIN_MENU);
 }
 
 void Game::startTournament(const std::string& tournamentName, 
@@ -486,7 +485,7 @@ void Game::startCareer(const std::string& playerName, Team& startingTeam) {
     careerYear = 1;
     careerMatches = 0;
     
-    setState(GameState::Career);
+    setState(GameState::CAREER);
 }
 
 void Game::advanceCareer() {
@@ -500,13 +499,13 @@ void Game::setGraphicsQuality(int quality) {
     // Update visualizer quality
     if (matchVisualizer) {
         VisualQuality visualQuality = VisualQuality::MEDIUM;
+        // Set graphics quality
         switch (quality) {
             case 0: visualQuality = VisualQuality::LOW; break;
             case 1: visualQuality = VisualQuality::MEDIUM; break;
             case 2: visualQuality = VisualQuality::HIGH; break;
-            case 3: visualQuality = VisualQuality::ULTRA; break;
+            default: visualQuality = VisualQuality::MEDIUM; break;
         }
-        matchVisualizer->setVisualQuality(visualQuality);
     }
 }
 
@@ -586,8 +585,9 @@ bool Game::initializeImGui() {
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    // Note: Docking and Viewports are only available in newer ImGui versions
+    // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
     
     // Setup ImGui style
     ImGui::StyleColorsDark();
@@ -618,32 +618,32 @@ void Game::renderMainMenu() {
     
     ImGui::SetCursorPos(ImVec2(windowWidth / 2 - 80, 200));
     if (ImGui::Button("Team Management", ImVec2(160, 40))) {
-        setState(GameState::TeamManagement);
+        setState(GameState::TEAM_MANAGEMENT);
     }
     
     ImGui::SetCursorPos(ImVec2(windowWidth / 2 - 80, 260));
     if (ImGui::Button("Match Simulation", ImVec2(160, 40))) {
-        setState(GameState::MatchSimulation);
+        setState(GameState::MATCH_SETUP);
     }
     
     ImGui::SetCursorPos(ImVec2(windowWidth / 2 - 80, 320));
     if (ImGui::Button("Auction", ImVec2(160, 40))) {
-        setState(GameState::Auction);
+        setState(GameState::AUCTION);
     }
     
     ImGui::SetCursorPos(ImVec2(windowWidth / 2 - 80, 380));
     if (ImGui::Button("Career Mode", ImVec2(160, 40))) {
-        setState(GameState::Career);
+        setState(GameState::CAREER);
     }
     
     ImGui::SetCursorPos(ImVec2(windowWidth / 2 - 80, 440));
     if (ImGui::Button("Settings", ImVec2(160, 40))) {
-        setState(GameState::Settings);
+        setState(GameState::SETTINGS);
     }
     
     ImGui::SetCursorPos(ImVec2(windowWidth / 2 - 80, 500));
     if (ImGui::Button("Exit", ImVec2(160, 40))) {
-        setState(GameState::Exit);
+        setState(GameState::EXIT);
     }
     
     ImGui::End();
@@ -655,10 +655,10 @@ void Game::renderTeamManagement() {
     if (ImGui::BeginTabBar("TeamTabs")) {
         if (ImGui::BeginTabItem("Teams")) {
             for (auto& team : teams) {
-                if (ImGui::TreeNode(team.getName().c_str())) {
-                    ImGui::Text("Country: %s", team.getCountry().c_str());
-                    ImGui::Text("Home Venue: %s", team.getHomeVenue().c_str());
-                    ImGui::Text("Players: %zu", team.getPlayers().size());
+                if (ImGui::TreeNode(team.GetName().c_str())) {
+                    ImGui::Text("Country: %s", team.GetCity().c_str());
+                    ImGui::Text("Home Venue: %s", team.GetHomeVenue().c_str());
+                    ImGui::Text("Players: %zu", team.GetSquad().size());
                     ImGui::TreePop();
                 }
             }
@@ -667,10 +667,10 @@ void Game::renderTeamManagement() {
         
         if (ImGui::BeginTabItem("Players")) {
             for (auto& player : players) {
-                if (ImGui::TreeNode(player.getName().c_str())) {
-                    ImGui::Text("Age: %d", player.getAge());
-                    ImGui::Text("Role: %s", player.getRoleString().c_str());
-                    ImGui::Text("Batting Average: %.2f", player.getBattingAverage());
+                if (ImGui::TreeNode(player.GetName().c_str())) {
+                    ImGui::Text("Age: %d", player.GetAge());
+                    ImGui::Text("Role: %s", player.GetRole().c_str());
+                    ImGui::Text("Batting Average: %.2f", player.GetPlayerStats().average);
                     ImGui::TreePop();
                 }
             }
@@ -681,7 +681,7 @@ void Game::renderTeamManagement() {
     }
     
     if (ImGui::Button("Back to Main Menu")) {
-        setState(GameState::MainMenu);
+        setState(GameState::MAIN_MENU);
     }
     
     ImGui::End();
@@ -702,21 +702,22 @@ void Game::renderAuction() {
     ImGui::Begin("Auction");
     
     if (auctionManager) {
-        auto auctionState = auctionManager->getAuctionState();
-        ImGui::Text("Auction Status: %s", auctionState.status.c_str());
-        ImGui::Text("Current Player: %s", auctionState.currentPlayer.c_str());
-        ImGui::Text("Current Bid: $%d", auctionState.currentBid);
+        auto& session = auctionManager->getCurrentSession();
+        ImGui::Text("Auction Status: %s", session.isActive ? "Active" : "Inactive");
+        ImGui::Text("Current Lot: %d", session.currentLotIndex);
+        ImGui::Text("Current Bid: $%.2f", auctionManager->getCurrentBid());
+        ImGui::Text("Current Bidder: %s", auctionManager->getCurrentBidder().c_str());
         
         static int bidAmount = 100000;
         ImGui::InputInt("Bid Amount", &bidAmount);
         
         if (ImGui::Button("Place Bid")) {
-            auctionManager->placeBid(bidAmount);
+            auctionManager->placeBid("Player Team", bidAmount);
         }
     }
     
     if (ImGui::Button("Back to Main Menu")) {
-        setState(GameState::MainMenu);
+        setState(GameState::MAIN_MENU);
     }
     
     ImGui::End();
@@ -726,7 +727,7 @@ void Game::renderCareer() {
     ImGui::Begin("Career Mode");
     
     ImGui::Text("Player: %s", careerPlayerName.c_str());
-    ImGui::Text("Team: %s", careerTeam ? careerTeam->getName().c_str() : "None");
+    ImGui::Text("Team: %s", careerTeam ? careerTeam->GetName().c_str() : "None");
     ImGui::Text("Year: %d", careerYear);
     ImGui::Text("Matches: %d", careerMatches);
     
@@ -735,7 +736,7 @@ void Game::renderCareer() {
     }
     
     if (ImGui::Button("Back to Main Menu")) {
-        setState(GameState::MainMenu);
+        setState(GameState::MAIN_MENU);
     }
     
     ImGui::End();
@@ -766,7 +767,7 @@ void Game::renderSettings() {
     }
     
     if (ImGui::Button("Back to Main Menu")) {
-        setState(GameState::MainMenu);
+        setState(GameState::MAIN_MENU);
     }
     
     ImGui::End();
@@ -781,30 +782,25 @@ void Game::handleStateTransition() {
 
 void Game::loadDefaultData() {
     // Create some default teams
-    Team india("India", "India", "Wankhede Stadium");
-    Team australia("Australia", "Australia", "MCG");
-    Team england("England", "England", "Lord's");
+    Team india("India", TeamType::INTERNATIONAL);
+    Team australia("Australia", TeamType::INTERNATIONAL);
+    Team england("England", TeamType::INTERNATIONAL);
     
     teams.push_back(india);
     teams.push_back(australia);
     teams.push_back(england);
     
     // Create some default players
-    Player kohli("Virat Kohli", 35, "India", PlayerRole::Batsman);
-    kohli.setBattingAverage(58.96);
-    kohli.setBattingStrikeRate(93.17);
-    
-    Player bumrah("Jasprit Bumrah", 30, "India", PlayerRole::Bowler);
-    bumrah.setBowlingAverage(23.31);
-    bumrah.setBowlingEconomy(7.39);
+    Player kohli("Virat Kohli", 35, PlayerRole::BATSMAN);
+    Player bumrah("Jasprit Bumrah", 30, PlayerRole::BOWLER);
     
     players.push_back(kohli);
     players.push_back(bumrah);
     
     // Create some default venues
-    Venue wankhede("Wankhede Stadium", "Mumbai", "India", 33108);
-    Venue mcg("MCG", "Melbourne", "Australia", 100024);
-    Venue lords("Lord's", "London", "England", 30000);
+    Venue wankhede("Wankhede Stadium", "Mumbai", VenueType::STADIUM);
+    Venue mcg("MCG", "Melbourne", VenueType::STADIUM);
+    Venue lords("Lord's", "London", VenueType::STADIUM);
     
     venues.push_back(wankhede);
     venues.push_back(mcg);

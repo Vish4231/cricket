@@ -56,7 +56,12 @@ struct TeamMorale {
 
 class Team {
 public:
+    // Constructors
     Team(const std::string& name, TeamType type);
+    Team(const Team& other) = delete; // Disable copy constructor
+    Team(Team&& other) noexcept; // Move constructor
+    Team& operator=(const Team& other) = delete; // Disable copy assignment
+    Team& operator=(Team&& other) noexcept; // Move assignment
     ~Team();
     
     // Basic info
@@ -94,7 +99,7 @@ public:
     std::string GetPlayerFieldingPosition(const std::string& playerName) const;
     
     // Stats and performance
-    const TeamStats& GetStats() const { return stats; }
+    const TeamStats& GetTeamStats() const { return stats; }
     void UpdateStats(const TeamStats& newStats);
     void CalculateTeamRating();
     int GetTeamRating() const { return teamRating; }
@@ -137,46 +142,62 @@ public:
     std::string ToJSON() const;
     static std::unique_ptr<Team> FromJSON(const std::string& json);
     
+    // Getters
+    const std::string& GetCity() const { return city; }
+    const std::string& GetOwner() const { return owner; }
+    int GetFounded() const { return founded; }
+    const std::string& GetColors() const { return colors; }
+    const std::string& GetLogo() const { return logo; }
+    float GetBudget() const { return budget; }
+    int GetTrophyCount() const { return trophyCount; }
+    const std::vector<std::string>& GetTrophies() const { return trophies; }
+    const std::map<std::string, float>& GetStats() const { return statsMap; }
+    const std::map<std::string, std::string>& GetSettings() const { return settings; }
+    
 private:
     // Basic info
     std::string name;
     TeamType type;
-    std::string homeVenue;
-    
-    // Squad and playing XI
-    std::vector<std::unique_ptr<Player>> squad;
-    std::vector<Player*> playingXI;
-    std::vector<Player*> battingOrder;
-    std::vector<Player*> bowlingOrder;
-    
-    // Leadership
-    Player* captain;
-    Player* viceCaptain;
-    
-    // Tactics
-    TeamFormation currentFormation;
-    std::map<std::string, std::string> fieldingPositions;
-    std::string matchStrategy;
+    std::string city;
+    std::string owner;
+    int founded;
+    std::string colors;
+    std::string logo;
+    float budget;
+    int trophyCount;
+    std::vector<std::string> trophies;
+    std::map<std::string, std::string> settings;
     
     // Stats and performance
     TeamStats stats;
+    std::map<std::string, float> statsMap;
     int teamRating;
     
-    // Finances
-    TeamFinances finances;
-    
-    // Morale
-    TeamMorale morale;
-    
-    // Staff
+    // Squad and management
+    std::vector<std::unique_ptr<Player>> squad;
+    std::vector<Player*> playingXI;
     std::string coach;
     std::string manager;
+    Player* captain;
+    Player* viceCaptain;
+    std::string homeVenue;
     
-    // Youth development
+    // Tactics
+    TeamFormation currentFormation;
+    std::vector<Player*> battingOrder;
+    std::vector<Player*> bowlingOrder;
+    std::map<std::string, std::string> fieldingPositions;
+    std::string matchStrategy;
+    
+    // Finances and morale
+    TeamFinances finances;
+    TeamMorale morale;
+    
+    // Youth and contracts
     std::vector<std::unique_ptr<Player>> youthPlayers;
     
     // Helper methods
+    void InitializeStats();
     void CalculateTeamChemistry();
-    void UpdateTeamMorale();
     bool IsPlayerInSquad(const std::string& playerName) const;
 }; 

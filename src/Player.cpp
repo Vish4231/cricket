@@ -162,14 +162,20 @@ void Player::SimulatePerformance() {
     attributes.fitness = std::max(10, std::min(100, attributes.fitness + fitnessChange / 20));
 }
 
+void Player::AddSpecialtyString(const std::string& specialty) {
+    specialties.push_back(specialty);
+}
+
+bool Player::HasSpecialtyString(const std::string& specialty) const {
+    return std::find(specialties.begin(), specialties.end(), specialty) != specialties.end();
+}
+
 void Player::AddSpecialty(PlayerSpecialty specialty) {
-    if (!HasSpecialty(specialty)) {
-        specialties.push_back(specialty);
-    }
+    playerSpecialties.push_back(specialty);
 }
 
 bool Player::HasSpecialty(PlayerSpecialty specialty) const {
-    return std::find(specialties.begin(), specialties.end(), specialty) != specialties.end();
+    return std::find(playerSpecialties.begin(), playerSpecialties.end(), specialty) != playerSpecialties.end();
 }
 
 void Player::AddAchievement(const std::string& achievement) {

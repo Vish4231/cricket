@@ -7,6 +7,14 @@
 #include <functional>
 #include <SDL2/SDL_mixer.h>
 
+// Forward declarations for event structs defined in MatchEngine.h
+struct BallEvent;
+struct WicketEvent;
+struct BoundaryEvent;
+struct OverEvent;
+struct InningsEvent;
+struct MatchEvent;
+
 enum class CommentaryType {
     BALL_BY_BALL,
     HIGHLIGHT,
@@ -24,13 +32,56 @@ enum class CommentaryTone {
 };
 
 enum class CommentaryEvent {
-    BALL_DELIVERED,
+    MATCH_START,
+    TOSS,
+    INNINGS_START,
+    BALL_BOWLED,
     RUNS_SCORED,
+    WICKET,
     WICKET_FALLEN,
+    FOUR,
+    SIX,
     BOUNDARY_HIT,
+    MAIDEN_OVER,
+    WICKET_MAIDEN,
+    FIFTY,
+    HUNDRED,
     MILESTONE_REACHED,
+    FIVE_WICKET_HAUL,
+    PARTNERSHIP,
+    INNINGS_END,
     MATCH_END,
-    PLAYER_ACHIEVEMENT
+    PLAYER_MILESTONE,
+    PLAYER_ACHIEVEMENT,
+    TEAM_MILESTONE,
+    DRAMATIC_MOMENT,
+    CROWD_REACTION,
+    WEATHER_CHANGE,
+    STRATEGY_CHANGE,
+    REVIEW,
+    UMPIRE_DECISION,
+    INJURY,
+    SUBSTITUTION,
+    TIMEOUT,
+    DRINKS_BREAK,
+    LUNCH_BREAK,
+    TEA_BREAK,
+    STUMPS,
+    DAY_END,
+    SESSION_START,
+    SESSION_END,
+    OVER_START,
+    OVER_END,
+    POWERPLAY_START,
+    POWERPLAY_END,
+    SUPER_OVER_START,
+    SUPER_OVER_END,
+    FINAL_OVER,
+    LAST_BALL,
+    VICTORY_LAP,
+    PRESENTATION,
+    AWARD_CEREMONY,
+    BALL_DELIVERED
 };
 
 struct CommentaryLine {
@@ -129,6 +180,21 @@ public:
     // Export and import
     void ExportCommentary(const std::string& filename) const;
     void ImportCommentary(const std::string& filename);
+    
+    // Match events
+    void onBallEvent(const BallEvent& event);
+    void onWicket(const WicketEvent& event);
+    void onBoundary(const BoundaryEvent& event);
+    void onOverComplete(const OverEvent& event);
+    void onInningsComplete(const InningsEvent& event);
+    void onMatchComplete(const MatchEvent& event);
+    void StartMatch(const std::string& team1, const std::string& team2, const std::string& venue);
+    
+    // Commentary generation
+    std::string generateCommentary(const BallEvent& event);
+    std::string generateWicketCommentary(const WicketEvent& event);
+    std::string generateBoundaryCommentary(const BoundaryEvent& event);
+    std::string generateOverCommentary(const OverEvent& event);
     
 private:
     // Commentary generation helpers
