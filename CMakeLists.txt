@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(CricketManager VERSION 1.0.0 LANGUAGES CXX)
+project(CricketManager VERSION 1.0.0 LANGUAGES C CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -37,6 +37,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/third_party/imgui)
 include_directories(/opt/homebrew/include)
+include_directories(${CMAKE_SOURCE_DIR}/include/glad/include)
 
 # Source files
 set(SOURCES
@@ -46,6 +47,7 @@ set(SOURCES
     src/Team.cpp
     src/MatchEngine.cpp
     src/AuctionManager.cpp
+    src/AuctionVisualizer.cpp
     src/CommentaryManager.cpp
     src/GUIManager.cpp
     src/AnimationHandler.cpp
@@ -56,7 +58,6 @@ set(SOURCES
     src/Model.cpp
     src/ParticleSystem.cpp
     src/ScreenEffect.cpp
-    include/glad/glad/src/glad.c
     third_party/imgui/imgui.cpp
     third_party/imgui/imgui_demo.cpp
     third_party/imgui/imgui_draw.cpp
@@ -66,8 +67,13 @@ set(SOURCES
     third_party/imgui/imgui_impl_opengl3.cpp
 )
 
+# C source files (compiled separately)
+set(C_SOURCES
+    src/glad.c
+)
+
 # Create executable
-add_executable(CricketManager ${SOURCES})
+add_executable(CricketManager ${SOURCES} ${C_SOURCES})
 
 # Link libraries
 target_link_libraries(CricketManager

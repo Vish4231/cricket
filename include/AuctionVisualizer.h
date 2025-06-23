@@ -361,4 +361,9 @@ private:
     void setPlayerAnimationState(const std::string& playerId, PlayerAnimationState state);
     void updateTeamAnimationState(TeamRepresentative& team, float deltaTime);
     void updatePlayerAnimationState(PlayerModel& player, float deltaTime);
+    
+    // Utility functions
+    glm::vec3 getTeamColor(const std::string& teamName);
+    float calculateBasePrice(const Player* player);
+    float randf(float min, float max);
 }; 

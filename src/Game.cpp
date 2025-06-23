@@ -88,6 +88,9 @@ bool Game::initialize(const std::string& windowTitle, int width, int height) {
         std::cerr << "Failed to initialize OpenGL" << std::endl;
         return false;
     }
+    if (animationHandler) {
+        animationHandler->initializeGL();
+    }
     
     // Initialize ImGui
     if (!initializeImGui()) {
@@ -148,10 +151,19 @@ void Game::cleanup() {
         // AnimationHandler cleanup is handled in destructor
     }
     
+    // Ensure OpenGL context is current before ImGui cleanup
+    if (glContext && window) {
+        SDL_GL_MakeCurrent(window, glContext);
+    }
+    
     // Cleanup ImGui
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext();
+    try {
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplSDL2_Shutdown();
+        ImGui::DestroyContext();
+    } catch (...) {
+        std::cerr << "Warning: ImGui cleanup failed, continuing..." << std::endl;
+    }
     
     // Cleanup OpenGL context
     if (glContext) {
@@ -250,10 +262,19 @@ void Game::render() {
         matchVisualizer->render(deltaTime);
     }
     
+    // Start ImGui frame
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplSDL2_NewFrame();
+    ImGui::NewFrame();
+    
     // Render GUI
     if (guiManager) {
         guiManager->Render();
     }
+    
+    // Render ImGui
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     
     // Swap buffers
     SDL_GL_SwapWindow(window);

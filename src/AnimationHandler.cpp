@@ -9,7 +9,10 @@ AnimationHandler::AnimationHandler() :
     animationTime(0.0f),
     isPlaying(false),
     loopAnimation(true) {
-    
+    // Do not call OpenGL functions here!
+}
+
+void AnimationHandler::initializeGL() {
     // Initialize OpenGL state for 3D rendering
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);

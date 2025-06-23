@@ -11,13 +11,25 @@
 #include <iomanip>
 #include <random>
 
-AuctionVisualizer::AuctionVisualizer() 
+AuctionVisualizer::AuctionVisualizer()
     : framebuffer(0), renderTexture(0), depthBuffer(0)
-    , viewportWidth(1280), viewportHeight(720)
+    , viewportWidth(0), viewportHeight(0)
     , currentPlayer(nullptr)
+    , cameraPosition(0.0f, 5.0f, 10.0f)
+    , cameraTarget(0.0f, 0.0f, 0.0f)
+    , cameraUp(0.0f, 1.0f, 0.0f)
+    , cameraFov(45.0f), cameraNear(0.1f), cameraFar(1000.0f), cameraAspect(16.0f/9.0f)
+    , cameraMode(AuctionCameraMode::HALL_OVERVIEW)
+    , cameraTransitionTime(0.0f)
+    , ambientColor(0.2f, 0.2f, 0.2f)
+    , directionalColor(1.0f, 1.0f, 1.0f)
+    , directionalDirection(0.0f, -1.0f, 0.0f)
+    , ambientIntensity(0.3f), directionalIntensity(0.7f)
+    , shadowsEnabled(true)
+    , auctionState(AuctionState::SETUP)
+    , auctionTimer(0.0f), currentBid(0.0f)
     , globalTime(0.0f), slowMotionSpeed(1.0f), slowMotionEnabled(false)
-    , visualQuality(2), targetFrameRate(60), vsyncEnabled(true)
-    , auctionTimer(0.0f), currentBid(0.0f), remainingTimeSeconds(30) {
+    , visualQuality(2), targetFrameRate(60), vsyncEnabled(true) {
     
     // Initialize camera
     cameraPosition = glm::vec3(0, 15, 25);
@@ -74,13 +86,6 @@ bool AuctionVisualizer::initialize(int windowWidth, int windowHeight) {
     viewportHeight = windowHeight;
     cameraAspect = static_cast<float>(windowWidth) / windowHeight;
     ui.screenSize = glm::vec2(windowWidth, windowHeight);
-    
-    // Initialize GLEW
-    glewExperimental = GL_TRUE;
-    if (glewInit() != GLEW_OK) {
-        std::cerr << "Failed to initialize GLEW" << std::endl;
-        return false;
-    }
     
     // Setup OpenGL state
     glEnable(GL_DEPTH_TEST);
@@ -182,7 +187,7 @@ void AuctionVisualizer::setupAuction(const std::vector<Team*>& teams, const std:
     teamReps.clear();
     for (size_t i = 0; i < teams.size(); ++i) {
         TeamRepresentative rep;
-        rep.teamName = teams[i]->getName();
+        rep.teamName = teams[i]->GetName();
         rep.position = hall.teamTablePositions[i % hall.teamTablePositions.size()];
         rep.rotation = glm::vec3(0, 0, 0);
         rep.scale = glm::vec3(1, 1, 1);
@@ -191,7 +196,7 @@ void AuctionVisualizer::setupAuction(const std::vector<Team*>& teams, const std:
         rep.isActive = false;
         rep.isBidding = false;
         rep.bidAmount = 0.0f;
-        rep.teamColor = getTeamColor(teams[i]->getName());
+        rep.teamColor = getTeamColor(teams[i]->GetName());
         rep.representativeName = "Team Rep " + std::to_string(i + 1);
         rep.teamId = i;
         teamReps.push_back(rep);
@@ -201,8 +206,8 @@ void AuctionVisualizer::setupAuction(const std::vector<Team*>& teams, const std:
     playerModels.clear();
     for (const auto& player : players) {
         PlayerModel pm;
-        pm.playerId = player->getName();
-        pm.playerName = player->getName();
+        pm.playerId = player->GetName();
+        pm.playerName = player->GetName();
         pm.position = hall.playerDisplayPosition;
         pm.rotation = glm::vec3(0, 0, 0);
         pm.scale = glm::vec3(1, 1, 1);
@@ -217,11 +222,11 @@ void AuctionVisualizer::setupAuction(const std::vector<Team*>& teams, const std:
         pm.status = "Available";
         
         // Add player stats
-        pm.stats.push_back("Batting: " + std::to_string(player->getBattingSkill()));
-        pm.stats.push_back("Bowling: " + std::to_string(player->getBowlingSkill()));
-        pm.stats.push_back("Fielding: " + std::to_string(player->getFieldingSkill()));
-        pm.stats.push_back("Experience: " + std::to_string(player->getExperience()));
-        pm.stats.push_back("Age: " + std::to_string(player->getAge()));
+        pm.stats.push_back("Batting: " + std::to_string(player->GetBattingSkill()));
+        pm.stats.push_back("Bowling: " + std::to_string(player->GetBowlingSkill()));
+        pm.stats.push_back("Fielding: " + std::to_string(player->GetFieldingSkill()));
+        pm.stats.push_back("Experience: " + std::to_string(player->GetExperience()));
+        pm.stats.push_back("Age: " + std::to_string(player->GetAge()));
         
         playerModels.push_back(pm);
     }
@@ -810,25 +815,84 @@ glm::vec3 AuctionVisualizer::getTeamColor(const std::string& teamName) {
 }
 
 float AuctionVisualizer::calculateBasePrice(const Player* player) {
-    // Calculate base price based on player stats
-    float basePrice = 50.0f; // Base price in lakhs
+    float basePrice = 50.0f; // Base price for any player
     
     // Add value based on skills
-    basePrice += player->getBattingSkill() * 0.5f;
-    basePrice += player->getBowlingSkill() * 0.5f;
-    basePrice += player->getFieldingSkill() * 0.3f;
-    basePrice += player->getExperience() * 0.2f;
+    basePrice += player->GetBattingSkill() * 0.5f;
+    basePrice += player->GetBowlingSkill() * 0.5f;
+    basePrice += player->GetFieldingSkill() * 0.3f;
     
-    // Adjust for age (younger players might be more valuable)
-    if (player->getAge() < 25) basePrice *= 1.2f;
-    else if (player->getAge() > 35) basePrice *= 0.8f;
+    // Add value based on experience
+    basePrice += player->GetExperience() * 2.0f;
     
-    return basePrice;
+    // Add value based on age (younger players are more valuable)
+    int age = player->GetAge();
+    if (age < 25) {
+        basePrice += (25 - age) * 3.0f;
+    } else if (age > 30) {
+        basePrice -= (age - 30) * 1.5f;
+    }
+    
+    return std::max(basePrice, 10.0f); // Minimum price
 }
 
-// Utility for random float
-static float randf(float min, float max) {
-    static std::mt19937 rng(std::random_device{}());
-    std::uniform_real_distribution<float> dist(min, max);
-    return dist(rng);
+float AuctionVisualizer::randf(float min, float max) {
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dis(min, max);
+    return dis(gen);
+}
+
+void AuctionVisualizer::renderEffects() {
+    // Render particle effects
+    for (auto& particleSystem : particleSystems) {
+        if (particleSystem) {
+            particleSystem->update(0.016f); // Assume 60 FPS
+        }
+    }
+    
+    // Render screen effects
+    for (auto& screenEffect : screenEffects) {
+        if (screenEffect) {
+            screenEffect->update(0.016f);
+        }
+    }
+}
+
+void AuctionVisualizer::addParticleEffect(const glm::vec3& position, const std::string& effectType) {
+    // Create particle effect based on type
+    if (effectType == "confetti") {
+        // Add confetti particles
+        if (!particleSystems.empty()) {
+            // Trigger confetti effect
+        }
+    } else if (effectType == "sparkle") {
+        // Add sparkle effect
+        if (!particleSystems.empty()) {
+            // Trigger sparkle effect
+        }
+    } else if (effectType == "smoke") {
+        // Add smoke effect
+        if (!particleSystems.empty()) {
+            // Trigger smoke effect
+        }
+    }
+}
+
+void AuctionVisualizer::addScreenEffect(const std::string& effectType, float duration) {
+    // Add screen effect based on type
+    if (effectType == "flash") {
+        // Add flash effect
+        if (!screenEffects.empty()) {
+            // Trigger flash effect
+        }
+    } else if (effectType == "shake") {
+        // Add screen shake
+        triggerCameraShake(0.5f, duration);
+    } else if (effectType == "fade") {
+        // Add fade effect
+        if (!screenEffects.empty()) {
+            // Trigger fade effect
+        }
+    }
 } 

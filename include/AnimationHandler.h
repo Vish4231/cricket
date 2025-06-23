@@ -126,6 +126,8 @@ public:
     AnimationHandler();
     ~AnimationHandler();
     
+    void initializeGL();
+    
     // Initialization
     bool Initialize();
     void Shutdown();
