@@ -12,13 +12,13 @@ int main(int argc, char* argv[]) {
         // Create and initialize the game
         Game game;
         
-        if (!game.Initialize()) {
+        if (!game.initialize()) {
             std::cerr << "Failed to initialize Cricket Manager!" << std::endl;
             return -1;
         }
         
         // Run the game
-        game.Run();
+        game.run();
         
         std::cout << "Cricket Manager exited successfully!" << std::endl;
         return 0;

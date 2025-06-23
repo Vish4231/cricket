@@ -8,6 +8,11 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <functional>
+
+// Forward declarations
+class Player;
+class Team;
 
 enum class AnimationType {
     IDLE,
@@ -20,7 +25,10 @@ enum class AnimationType {
     FIELDING_CATCH,
     FIELDING_THROW,
     CELEBRATION,
-    INJURY
+    INJURY,
+    BATTING,
+    FIELDING,
+    DISAPPOINTMENT
 };
 
 enum class PlayerState {
@@ -31,6 +39,13 @@ enum class PlayerState {
     RUNNING,
     CELEBRATING,
     INJURED
+};
+
+enum class AnimationState {
+    STOPPED,
+    PLAYING,
+    PAUSED,
+    LOOPING
 };
 
 struct Bone {
@@ -55,6 +70,17 @@ struct Animation {
     int frameCount;
     std::vector<AnimationFrame> frames;
     bool isLooping;
+    std::vector<std::string> keyframes;
+    std::map<std::string, std::function<void()>> events;
+};
+
+struct AnimationInstance {
+    std::string animationName;
+    AnimationState state;
+    float currentTime;
+    float speed;
+    bool reverse;
+    std::function<void()> onComplete;
 };
 
 struct Model {
@@ -170,6 +196,27 @@ public:
     void UpdateAnimation(const std::string& playerName, float deltaTime);
     void UpdateAllAnimations(float deltaTime);
     
+    // Animation management
+    void addAnimation(const Animation& animation);
+    void removeAnimation(const std::string& name);
+    Animation* getAnimation(const std::string& name);
+    
+    // Instance management
+    std::string playAnimation(const std::string& animationName, bool loop = false, float speed = 1.0f);
+    void stopAnimation(const std::string& instanceId);
+    void pauseAnimation(const std::string& instanceId);
+    void resumeAnimation(const std::string& instanceId);
+    
+    // Getters
+    const std::vector<AnimationInstance>& getActiveAnimations() const { return activeAnimations; }
+    bool isAnimationPlaying(const std::string& instanceId) const;
+    
+    // Callbacks
+    void setAnimationEventCallback(const std::string& eventName, std::function<void()> callback);
+    
+    // Legacy methods for compatibility
+    void UpdateAllAnimations(float deltaTime);
+    
 private:
     // Model loading helpers
     bool LoadFBXModel(const std::string& filename, Model* model);
@@ -222,4 +269,13 @@ private:
     GLuint defaultVAO;
     GLuint defaultVBO;
     bool isInitialized;
+    
+    std::map<std::string, Animation> animations;
+    std::vector<AnimationInstance> activeAnimations;
+    std::map<std::string, std::function<void()>> eventCallbacks;
+    int nextInstanceId;
+    
+    void updateAnimationInstance(AnimationInstance& instance, float deltaTime);
+    void triggerAnimationEvent(const std::string& eventName);
+    std::string generateInstanceId();
 }; 

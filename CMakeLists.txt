@@ -27,7 +27,7 @@ find_package(CURL REQUIRED)
 find_package(nlohmann_json 3.2.0 REQUIRED)
 
 # Find GLM (OpenGL Mathematics)
-find_package(GLM REQUIRED)
+find_package(glm REQUIRED)
 
 # Find GLEW (OpenGL Extension Wrangler)
 find_package(GLEW REQUIRED)
@@ -78,7 +78,7 @@ target_link_libraries(CricketManager
     CURL::libcurl
     nlohmann_json::nlohmann_json
     GLEW::GLEW
-    GLM::GLM
+    glm
 )
 
 # Include directories for libraries

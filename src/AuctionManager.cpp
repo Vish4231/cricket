@@ -1,405 +1,673 @@
 #include "AuctionManager.h"
+#include "AuctionVisualizer.h"
 #include <iostream>
-#include <sstream>
+#include <algorithm>
 #include <random>
+#include <chrono>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
 
 AuctionManager::AuctionManager() 
-    : currentItem(nullptr)
-    , isActive(false)
-    , isPaused(false)
-    , maxPlayersPerTeam(25)
-    , minBudget(50000000)
-    , maxBudget(100000000)
-    , bidTimeLimit(30)
-    , timeRemaining(0)
-    , aiBiddingEnabled(true)
-{
-    gen = std::mt19937(rd());
+    : randomGenerator(std::random_device{}())
+    , aiBiddingEnabled(false)
+    , biddingTimeSeconds(30)
+    , remainingTimeSeconds(30)
+    , timerActive(false)
+    , minimumIncrement(1.0f)
+    , maximumBid(1000.0f)
+    , allowWithdrawals(true)
+    , allowAutoBidding(true) {
 }
 
 AuctionManager::~AuctionManager() {
+    cleanup();
 }
 
-void AuctionManager::InitializeAuction(const std::vector<Team*>& t) {
-    teams = t;
-    InitializeTeamBudgets();
-    UpdateAuctionStats();
-}
-
-void AuctionManager::AddPlayerToAuction(Player* player, int basePrice) {
-    AuctionItem item;
-    item.player = player;
-    item.basePrice = basePrice;
-    item.currentBid = basePrice;
-    item.currentBidder = "";
-    item.phase = AuctionPhase::PRE_AUCTION;
-    item.timeRemaining = bidTimeLimit;
-    item.bidType = BidType::NORMAL;
+bool AuctionManager::initialize() {
+    // Initialize random number generator
+    randomGenerator.seed(std::chrono::steady_clock::now().time_since_epoch().count());
     
-    auctionItems.push_back(item);
-}
-
-void AuctionManager::SetAuctionRules(int maxPlayers, int minBud, int maxBud) {
-    maxPlayersPerTeam = maxPlayers;
-    minBudget = minBud;
-    maxBudget = maxBud;
-}
-
-void AuctionManager::StartAuction() {
-    isActive = true;
-    isPaused = false;
+    // Initialize auction session
+    currentSession.sessionName = "Default Auction";
+    currentSession.type = AuctionType::IPL_STYLE;
+    currentSession.isActive = false;
+    currentSession.currentLotIndex = 0;
+    currentSession.sessionBudget = 0.0f;
+    currentSession.totalPlayers = 0;
+    currentSession.soldPlayers = 0;
+    currentSession.unsoldPlayers = 0;
     
-    if (!auctionItems.empty()) {
-        currentItem = &auctionItems[0];
-        currentItem->phase = AuctionPhase::BIDDING;
-        StartBidTimer();
+    // Initialize current lot
+    currentLot.player = nullptr;
+    currentLot.basePrice = 0.0f;
+    currentLot.reservePrice = 0.0f;
+    currentLot.currentBid = 0.0f;
+    currentLot.isSold = false;
+    currentLot.isUnsold = false;
+    currentLot.bidCount = 0;
+    
+    std::cout << "AuctionManager initialized successfully" << std::endl;
+    return true;
+}
+
+void AuctionManager::cleanup() {
+    // Cleanup auction data
+    currentSession.lots.clear();
+    currentSession.teamBudgets.clear();
+    teamBudgets.clear();
+    currentBidHistory.clear();
+}
+
+void AuctionManager::setVisualizer(std::shared_ptr<AuctionVisualizer> visualizer) {
+    this->visualizer = visualizer;
+}
+
+void AuctionManager::createAuctionSession(const std::string& name, AuctionType type) {
+    currentSession.sessionName = name;
+    currentSession.type = type;
+    currentSession.startTime = std::chrono::steady_clock::now();
+    currentSession.isActive = false;
+    currentSession.currentLotIndex = 0;
+    currentSession.soldPlayers = 0;
+    currentSession.unsoldPlayers = 0;
+    
+    std::cout << "Created auction session: " << name << std::endl;
+}
+
+void AuctionManager::addTeams(const std::vector<Team*>& teams) {
+    for (const auto& team : teams) {
+        TeamBudget budget;
+        budget.teamName = team->getName();
+        budget.totalBudget = team->getBudget();
+        budget.spentAmount = 0.0f;
+        budget.remainingBudget = team->getBudget();
+        budget.playersBought = 0;
+        budget.maxPlayers = 25;
+        budget.strategy = BiddingStrategy::BALANCED;
+        budget.aggressionLevel = 0.5f;
+        
+        teamBudgets[team->getName()] = budget;
+        currentSession.teamBudgets.push_back(budget);
     }
     
-    std::cout << "Auction started with " << auctionItems.size() << " players" << std::endl;
+    std::cout << "Added " << teams.size() << " teams to auction" << std::endl;
 }
 
-void AuctionManager::PauseAuction() {
-    isPaused = true;
+void AuctionManager::addPlayers(const std::vector<Player*>& players) {
+    for (const auto& player : players) {
+        AuctionLot lot;
+        lot.player = player;
+        lot.basePrice = calculateBasePrice(player);
+        lot.reservePrice = lot.basePrice * 0.8f;
+        lot.currentBid = 0.0f;
+        lot.isSold = false;
+        lot.isUnsold = false;
+        lot.bidCount = 0;
+        
+        currentSession.lots.push_back(lot);
+    }
+    
+    currentSession.totalPlayers = players.size();
+    std::cout << "Added " << players.size() << " players to auction" << std::endl;
 }
 
-void AuctionManager::ResumeAuction() {
-    isPaused = false;
+void AuctionManager::setTeamBudgets(const std::map<std::string, float>& budgets) {
+    for (const auto& [teamName, budget] : budgets) {
+        if (teamBudgets.find(teamName) != teamBudgets.end()) {
+            teamBudgets[teamName].totalBudget = budget;
+            teamBudgets[teamName].remainingBudget = budget;
+        }
+    }
 }
 
-void AuctionManager::EndAuction() {
-    isActive = false;
+void AuctionManager::setTeamStrategies(const std::map<std::string, BiddingStrategy>& strategies) {
+    for (const auto& [teamName, strategy] : strategies) {
+        if (teamBudgets.find(teamName) != teamBudgets.end()) {
+            teamBudgets[teamName].strategy = strategy;
+        }
+    }
+}
+
+void AuctionManager::startAuction() {
+    if (currentSession.lots.empty()) {
+        std::cerr << "No players in auction!" << std::endl;
+        return;
+    }
+    
+    currentSession.isActive = true;
+    currentSession.startTime = std::chrono::steady_clock::now();
+    currentSession.currentLotIndex = 0;
+    
+    // Set first lot as current
+    if (!currentSession.lots.empty()) {
+        currentLot = currentSession.lots[0];
+        currentLot.startTime = std::chrono::steady_clock::now();
+    }
+    
+    std::cout << "Auction started!" << std::endl;
+}
+
+void AuctionManager::pauseAuction() {
+    currentSession.isActive = false;
+    timerActive = false;
+    std::cout << "Auction paused" << std::endl;
+}
+
+void AuctionManager::resumeAuction() {
+    currentSession.isActive = true;
+    timerActive = true;
+    std::cout << "Auction resumed" << std::endl;
+}
+
+void AuctionManager::endAuction() {
+    currentSession.isActive = false;
+    currentSession.endTime = std::chrono::steady_clock::now();
+    timerActive = false;
+    
+    std::cout << "Auction ended!" << std::endl;
     
     if (auctionEndCallback) {
         auctionEndCallback();
     }
 }
 
-void AuctionManager::PlaceBid(const std::string& teamName, int amount) {
-    if (!currentItem || currentItem->phase != AuctionPhase::BIDDING) {
+void AuctionManager::resetAuction() {
+    currentSession.isActive = false;
+    currentSession.currentLotIndex = 0;
+    currentSession.soldPlayers = 0;
+    currentSession.unsoldPlayers = 0;
+    
+    // Reset team budgets
+    for (auto& [teamName, budget] : teamBudgets) {
+        budget.spentAmount = 0.0f;
+        budget.remainingBudget = budget.totalBudget;
+        budget.playersBought = 0;
+    }
+    
+    // Reset lots
+    for (auto& lot : currentSession.lots) {
+        lot.isSold = false;
+        lot.isUnsold = false;
+        lot.currentBid = 0.0f;
+        lot.bidCount = 0;
+    }
+    
+    currentBidHistory.clear();
+    timerActive = false;
+    
+    std::cout << "Auction reset" << std::endl;
+}
+
+void AuctionManager::placeBid(const std::string& teamName, float amount) {
+    if (!currentSession.isActive || !timerActive) {
         return;
     }
     
-    if (!CanTeamBid(teamName, amount)) {
+    if (!validateBid(teamName, amount)) {
+        std::cout << "Invalid bid from " << teamName << ": " << amount << std::endl;
         return;
     }
     
-    // Create bid
+    // Update current bid
+    currentLot.currentBid = amount;
+    currentLot.currentBidder = teamName;
+    currentLot.bidCount++;
+    
+    // Add to bid history
     Bid bid;
     bid.teamName = teamName;
     bid.amount = amount;
-    bid.isActive = true;
+    bid.timestamp = std::chrono::steady_clock::now();
+    bid.strategy = getTeamStrategy(teamName);
+    bid.isWinning = true;
+    bid.reason = "Manual bid";
     
-    currentItem->currentBid = amount;
-    currentItem->currentBidder = teamName;
-    currentItem->bidHistory.push_back(bid);
+    currentLot.bidHistory.push_back(bid);
+    currentBidHistory.push_back(bid);
     
     // Reset timer
-    timeRemaining = bidTimeLimit;
+    remainingTimeSeconds = biddingTimeSeconds;
+    lotStartTime = std::chrono::steady_clock::now();
     
+    // Update visualizer
+    if (visualizer) {
+        visualizer->onBidPlaced(teamName, amount);
+    }
+    
+    // Trigger callback
     if (bidPlacedCallback) {
-        bidPlacedCallback(bid);
-    }
-}
-
-void AuctionManager::WithdrawBid(const std::string& teamName) {
-    // TODO: Implement bid withdrawal
-}
-
-void AuctionManager::AcceptBid(const std::string& teamName) {
-    if (currentItem && currentItem->currentBidder == teamName) {
-        SellPlayer(currentItem->player, teamName, currentItem->currentBid);
-    }
-}
-
-void AuctionManager::RejectBid(const std::string& teamName) {
-    // TODO: Implement bid rejection
-}
-
-void AuctionManager::SimulateAIBids() {
-    if (!aiBiddingEnabled || !currentItem) {
-        return;
+        bidPlacedCallback(teamName, amount);
     }
     
-    ProcessAIBids();
+    std::cout << "Bid placed: " << teamName << " - " << amount << " lakhs" << std::endl;
 }
 
-void AuctionManager::SetAIBiddingStrategy(const std::string& teamName, const std::string& strategy) {
+void AuctionManager::autoBid(const std::string& teamName) {
+    if (!aiBiddingEnabled) return;
+    
+    float bidAmount = calculateAIBid(teamName, currentLot);
+    if (bidAmount > 0) {
+        placeBid(teamName, bidAmount);
+    }
+}
+
+void AuctionManager::withdrawBid(const std::string& teamName) {
+    if (!allowWithdrawals) return;
+    
+    // Implementation for bid withdrawal
+    std::cout << "Bid withdrawn by " << teamName << std::endl;
+}
+
+void AuctionManager::setBiddingTime(int seconds) {
+    biddingTimeSeconds = seconds;
+    remainingTimeSeconds = seconds;
+}
+
+void AuctionManager::setMinimumIncrement(float increment) {
+    minimumIncrement = increment;
+}
+
+void AuctionManager::setCurrentLot(int lotIndex) {
+    if (lotIndex >= 0 && lotIndex < currentSession.lots.size()) {
+        currentSession.currentLotIndex = lotIndex;
+        currentLot = currentSession.lots[lotIndex];
+        currentLot.startTime = std::chrono::steady_clock::now();
+        remainingTimeSeconds = biddingTimeSeconds;
+        timerActive = true;
+        
+        if (lotChangedCallback) {
+            lotChangedCallback(lotIndex);
+        }
+    }
+}
+
+void AuctionManager::nextLot() {
+    if (currentSession.currentLotIndex < currentSession.lots.size() - 1) {
+        setCurrentLot(currentSession.currentLotIndex + 1);
+    }
+}
+
+void AuctionManager::previousLot() {
+    if (currentSession.currentLotIndex > 0) {
+        setCurrentLot(currentSession.currentLotIndex - 1);
+    }
+}
+
+void AuctionManager::skipLot() {
+    currentLot.isUnsold = true;
+    currentSession.unsoldPlayers++;
+    
+    std::cout << "Lot skipped: " << currentLot.player->getName() << std::endl;
+    
+    nextLot();
+}
+
+void AuctionManager::unsoldLot() {
+    currentLot.isUnsold = true;
+    currentSession.unsoldPlayers++;
+    
+    std::cout << "Lot unsold: " << currentLot.player->getName() << std::endl;
+    
+    nextLot();
+}
+
+void AuctionManager::enableAIBidding(bool enabled) {
+    aiBiddingEnabled = enabled;
+}
+
+void AuctionManager::setAIStrategy(const std::string& teamName, BiddingStrategy strategy) {
     aiStrategies[teamName] = strategy;
 }
 
-void AuctionManager::NextPlayer() {
-    if (!currentItem) return;
+void AuctionManager::setAIAggression(const std::string& teamName, float aggression) {
+    aiAggression[teamName] = glm::clamp(aggression, 0.0f, 1.0f);
+}
+
+void AuctionManager::simulateAIBidding() {
+    if (!aiBiddingEnabled || !currentSession.isActive) return;
     
-    auto it = std::find(auctionItems.begin(), auctionItems.end(), *currentItem);
-    if (it != auctionItems.end() && std::next(it) != auctionItems.end()) {
-        currentItem = &(*std::next(it));
-        currentItem->phase = AuctionPhase::BIDDING;
-        StartBidTimer();
+    for (const auto& [teamName, budget] : teamBudgets) {
+        if (shouldAIBid(teamName, currentLot)) {
+            autoBid(teamName);
+        }
     }
 }
 
-void AuctionManager::PreviousPlayer() {
-    if (!currentItem) return;
+std::map<std::string, float> AuctionManager::getTeamSpending() const {
+    std::map<std::string, float> spending;
+    for (const auto& [teamName, budget] : teamBudgets) {
+        spending[teamName] = budget.spentAmount;
+    }
+    return spending;
+}
+
+std::map<std::string, int> AuctionManager::getTeamPlayerCount() const {
+    std::map<std::string, int> counts;
+    for (const auto& [teamName, budget] : teamBudgets) {
+        counts[teamName] = budget.playersBought;
+    }
+    return counts;
+}
+
+std::vector<AuctionLot> AuctionManager::getSoldLots() const {
+    std::vector<AuctionLot> soldLots;
+    for (const auto& lot : currentSession.lots) {
+        if (lot.isSold) {
+            soldLots.push_back(lot);
+        }
+    }
+    return soldLots;
+}
+
+std::vector<AuctionLot> AuctionManager::getUnsoldLots() const {
+    std::vector<AuctionLot> unsoldLots;
+    for (const auto& lot : currentSession.lots) {
+        if (lot.isUnsold) {
+            unsoldLots.push_back(lot);
+        }
+    }
+    return unsoldLots;
+}
+
+float AuctionManager::getTotalRevenue() const {
+    float total = 0.0f;
+    for (const auto& lot : currentSession.lots) {
+        if (lot.isSold) {
+            total += lot.finalPrice;
+        }
+    }
+    return total;
+}
+
+float AuctionManager::getAveragePrice() const {
+    auto soldLots = getSoldLots();
+    if (soldLots.empty()) return 0.0f;
     
-    auto it = std::find(auctionItems.begin(), auctionItems.end(), *currentItem);
-    if (it != auctionItems.begin()) {
-        currentItem = &(*std::prev(it));
-        currentItem->phase = AuctionPhase::BIDDING;
-        StartBidTimer();
-    }
+    float total = getTotalRevenue();
+    return total / soldLots.size();
 }
 
-void AuctionManager::JumpToPlayer(int index) {
-    if (index >= 0 && index < static_cast<int>(auctionItems.size())) {
-        currentItem = &auctionItems[index];
-        currentItem->phase = AuctionPhase::BIDDING;
-        StartBidTimer();
-    }
-}
-
-void AuctionManager::SetCurrentPlayer(Player* player) {
-    for (auto& item : auctionItems) {
-        if (item.player == player) {
-            currentItem = &item;
-            currentItem->phase = AuctionPhase::BIDDING;
-            StartBidTimer();
-            break;
-        }
-    }
-}
-
-void AuctionManager::SetBidTimeLimit(int seconds) {
-    bidTimeLimit = seconds;
-}
-
-void AuctionManager::StartBidTimer() {
-    timeRemaining = bidTimeLimit;
-}
-
-void AuctionManager::UpdateBidTimer() {
-    if (timeRemaining > 0) {
-        timeRemaining--;
-        if (timeRemaining == 0) {
-            HandleBidTimeout();
-        }
-    }
-}
-
-bool AuctionManager::CanTeamBid(const std::string& teamName, int amount) const {
-    for (const auto& budget : teamBudgets) {
-        if (budget.teamName == teamName) {
-            return budget.remainingBudget >= amount;
-        }
-    }
-    return false;
-}
-
-void AuctionManager::UpdateTeamBudget(const std::string& teamName, int amount) {
-    for (auto& budget : teamBudgets) {
-        if (budget.teamName == teamName) {
-            budget.spentAmount += amount;
-            budget.remainingBudget -= amount;
-            break;
-        }
-    }
-}
-
-int AuctionManager::GetTeamRemainingBudget(const std::string& teamName) const {
-    for (const auto& budget : teamBudgets) {
-        if (budget.teamName == teamName) {
-            return budget.remainingBudget;
-        }
-    }
-    return 0;
-}
-
-void AuctionManager::CalculateAuctionStats() {
-    auctionStats.totalPlayers = auctionItems.size();
-    auctionStats.soldPlayers = 0;
-    auctionStats.unsoldPlayers = 0;
-    auctionStats.totalAmount = 0;
-    auctionStats.highestBid = 0;
+std::string AuctionManager::getTopBidder() const {
+    std::string topBidder;
+    float highestBid = 0.0f;
     
-    for (const auto& item : auctionItems) {
-        if (item.phase == AuctionPhase::SOLD) {
-            auctionStats.soldPlayers++;
-            auctionStats.totalAmount += item.currentBid;
-            if (item.currentBid > auctionStats.highestBid) {
-                auctionStats.highestBid = item.currentBid;
-                auctionStats.highestBidder = item.currentBidder;
-            }
-        } else if (item.phase == AuctionPhase::UNSOLD) {
-            auctionStats.unsoldPlayers++;
-        }
-    }
-}
-
-std::string AuctionManager::GenerateAuctionReport() const {
-    std::ostringstream report;
-    report << "=== AUCTION REPORT ===" << std::endl;
-    report << "Total Players: " << auctionStats.totalPlayers << std::endl;
-    report << "Sold: " << auctionStats.soldPlayers << std::endl;
-    report << "Unsold: " << auctionStats.unsoldPlayers << std::endl;
-    report << "Total Amount: " << auctionStats.totalAmount << std::endl;
-    report << "Highest Bid: " << auctionStats.highestBid << " by " << auctionStats.highestBidder << std::endl;
-    return report.str();
-}
-
-std::string AuctionManager::GenerateTeamReport(const std::string& teamName) const {
-    std::ostringstream report;
-    report << "=== TEAM REPORT: " << teamName << " ===" << std::endl;
-    
-    for (const auto& budget : teamBudgets) {
-        if (budget.teamName == teamName) {
-            report << "Budget: " << budget.totalBudget << std::endl;
-            report << "Spent: " << budget.spentAmount << std::endl;
-            report << "Remaining: " << budget.remainingBudget << std::endl;
-            report << "Players Bought: " << budget.playersBought << std::endl;
-            break;
+    for (const auto& [teamName, budget] : teamBudgets) {
+        if (budget.spentAmount > highestBid) {
+            highestBid = budget.spentAmount;
+            topBidder = teamName;
         }
     }
     
-    return report.str();
+    return topBidder;
 }
 
-void AuctionManager::SetBidPlacedCallback(std::function<void(const Bid&)> callback) {
+void AuctionManager::update(float deltaTime) {
+    if (!currentSession.isActive) return;
+    
+    updateTimer();
+    processBids();
+    checkAuctionEnd();
+    
+    if (aiBiddingEnabled) {
+        simulateAIBidding();
+    }
+}
+
+void AuctionManager::processBids() {
+    // Process any pending bids or AI bids
+}
+
+void AuctionManager::updateTimer() {
+    if (!timerActive) return;
+    
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - lotStartTime);
+    remainingTimeSeconds = biddingTimeSeconds - elapsed.count();
+    
+    if (remainingTimeSeconds <= 0) {
+        // Time's up - sell to current bidder or mark as unsold
+        if (currentLot.currentBid > 0) {
+            onBidWon(currentLot.currentBidder, currentLot.currentBid);
+        } else {
+            unsoldLot();
+        }
+    }
+}
+
+void AuctionManager::checkAuctionEnd() {
+    if (currentSession.currentLotIndex >= currentSession.lots.size()) {
+        endAuction();
+    }
+}
+
+const AuctionLot& AuctionManager::getCurrentLot() const {
+    return currentLot;
+}
+
+const std::vector<Bid>& AuctionManager::getCurrentBidHistory() const {
+    return currentBidHistory;
+}
+
+int AuctionManager::getRemainingTime() const {
+    return remainingTimeSeconds;
+}
+
+bool AuctionManager::isBiddingActive() const {
+    return currentSession.isActive && timerActive && remainingTimeSeconds > 0;
+}
+
+void AuctionManager::setBidPlacedCallback(std::function<void(const std::string&, float)> callback) {
     bidPlacedCallback = callback;
 }
 
-void AuctionManager::SetPlayerSoldCallback(std::function<void(Player*, const std::string&, int)> callback) {
-    playerSoldCallback = callback;
+void AuctionManager::setLotSoldCallback(std::function<void(const std::string&, const std::string&, float)> callback) {
+    lotSoldCallback = callback;
 }
 
-void AuctionManager::SetAuctionEndCallback(std::function<void()> callback) {
+void AuctionManager::setAuctionEndCallback(std::function<void()> callback) {
     auctionEndCallback = callback;
 }
 
-void AuctionManager::ExportAuctionData(const std::string& filename) const {
-    // TODO: Implement export functionality
+void AuctionManager::setLotChangedCallback(std::function<void(int)> callback) {
+    lotChangedCallback = callback;
 }
 
-void AuctionManager::ImportAuctionData(const std::string& filename) {
-    // TODO: Implement import functionality
+void AuctionManager::exportAuctionResults(const std::string& filename) const {
+    // Implementation for exporting auction results
 }
 
-void AuctionManager::Update(float deltaTime) {
-    if (!isActive || isPaused) {
-        return;
-    }
-    
-    UpdateBidTimer();
-    
-    if (aiBiddingEnabled) {
-        SimulateAIBids();
-    }
+void AuctionManager::importAuctionData(const std::string& filename) {
+    // Implementation for importing auction data
+}
+
+void AuctionManager::generateAuctionReport(const std::string& filename) const {
+    // Implementation for generating auction report
 }
 
 // Private helper methods
-void AuctionManager::InitializeTeamBudgets() {
-    teamBudgets.clear();
-    
-    for (const auto& team : teams) {
-        TeamBudget budget;
-        budget.teamName = team->GetName();
-        budget.totalBudget = maxBudget;
-        budget.spentAmount = 0;
-        budget.remainingBudget = maxBudget;
-        budget.playersBought = 0;
-        budget.maxPlayers = maxPlayersPerTeam;
-        
-        teamBudgets.push_back(budget);
+void AuctionManager::updateTeamBudget(const std::string& teamName, float amount) {
+    if (teamBudgets.find(teamName) != teamBudgets.end()) {
+        teamBudgets[teamName].spentAmount += amount;
+        teamBudgets[teamName].remainingBudget -= amount;
+        teamBudgets[teamName].playersBought++;
     }
 }
 
-void AuctionManager::ProcessAIBids() {
-    if (!currentItem || currentItem->phase != AuctionPhase::BIDDING) {
-        return;
+bool AuctionManager::validateBid(const std::string& teamName, float amount) {
+    if (teamBudgets.find(teamName) == teamBudgets.end()) {
+        return false;
     }
     
-    for (const auto& team : teams) {
-        std::string strategy = aiStrategies[team->GetName()];
-        if (strategy.empty()) {
-            strategy = "balanced";
-        }
-        
-        EvaluatePlayerValue(currentItem->player, team->GetName());
-        int optimalBid = CalculateOptimalBid(currentItem->player, team->GetName());
-        
-        if (optimalBid > currentItem->currentBid && CanTeamBid(team->GetName(), optimalBid)) {
-            PlaceBid(team->GetName(), optimalBid);
-        }
-    }
-}
-
-void AuctionManager::EvaluatePlayerValue(Player* player, const std::string& teamName) {
-    // TODO: Implement player value evaluation
-}
-
-int AuctionManager::CalculateOptimalBid(Player* player, const std::string& teamName) {
-    // TODO: Implement optimal bid calculation
-    return player->GetOverallRating() * 100000; // Simple calculation
-}
-
-void AuctionManager::UpdateAuctionStats() {
-    CalculateAuctionStats();
-}
-
-void AuctionManager::ValidateBid(const std::string& teamName, int amount) {
-    // TODO: Implement bid validation
-}
-
-void AuctionManager::HandleBidTimeout() {
-    if (currentItem && currentItem->phase == AuctionPhase::BIDDING) {
-        if (!currentItem->currentBidder.empty()) {
-            AcceptBid(currentItem->currentBidder);
-        } else {
-            MarkPlayerUnsold(currentItem->player);
-        }
-    }
-}
-
-void AuctionManager::SellPlayer(Player* player, const std::string& teamName, int amount) {
-    if (currentItem) {
-        currentItem->phase = AuctionPhase::SOLD;
+    const auto& budget = teamBudgets[teamName];
+    
+    // Check if team has enough budget
+    if (amount > budget.remainingBudget) {
+        return false;
     }
     
-    UpdateTeamBudget(teamName, amount);
+    // Check if bid is higher than current bid
+    if (amount <= currentLot.currentBid) {
+        return false;
+    }
+    
+    // Check minimum increment
+    if (amount < currentLot.currentBid + minimumIncrement) {
+        return false;
+    }
+    
+    return true;
+}
+
+float AuctionManager::calculateNextBid(float currentBid) {
+    return currentBid + minimumIncrement;
+}
+
+float AuctionManager::calculateAIBid(const std::string& teamName, const AuctionLot& lot) {
+    if (teamBudgets.find(teamName) == teamBudgets.end()) {
+        return 0.0f;
+    }
+    
+    const auto& budget = teamBudgets[teamName];
+    float playerValue = calculatePlayerValue(lot.player);
+    float marketDemand = calculateMarketDemand(lot.player);
+    float aggression = getTeamAggression(teamName);
+    
+    // Calculate bid based on strategy and aggression
+    float baseBid = lot.currentBid + minimumIncrement;
+    float maxBid = playerValue * marketDemand * (1.0f + aggression);
+    
+    if (baseBid > maxBid || baseBid > budget.remainingBudget) {
+        return 0.0f; // Don't bid
+    }
+    
+    return baseBid;
+}
+
+bool AuctionManager::shouldAIBid(const std::string& teamName, const AuctionLot& lot) {
+    if (teamBudgets.find(teamName) == teamBudgets.end()) {
+        return false;
+    }
+    
+    const auto& budget = teamBudgets[teamName];
+    
+    // Check if team needs this type of player
+    // Check if team has budget
+    // Check if player fits team strategy
+    
+    return true; // Simplified for now
+}
+
+BiddingStrategy AuctionManager::getTeamStrategy(const std::string& teamName) const {
+    if (teamBudgets.find(teamName) != teamBudgets.end()) {
+        return teamBudgets.at(teamName).strategy;
+    }
+    return BiddingStrategy::BALANCED;
+}
+
+float AuctionManager::getTeamAggression(const std::string& teamName) const {
+    if (aiAggression.find(teamName) != aiAggression.end()) {
+        return aiAggression.at(teamName);
+    }
+    return 0.5f;
+}
+
+float AuctionManager::calculatePlayerValue(const Player* player) const {
+    if (!player) return 0.0f;
+    
+    float value = 50.0f; // Base value
+    
+    // Add value based on skills
+    value += player->getBattingSkill() * 0.5f;
+    value += player->getBowlingSkill() * 0.5f;
+    value += player->getFieldingSkill() * 0.3f;
+    value += player->getExperience() * 0.2f;
+    
+    // Adjust for age
+    if (player->getAge() < 25) value *= 1.2f;
+    else if (player->getAge() > 35) value *= 0.8f;
+    
+    return value;
+}
+
+float AuctionManager::calculateMarketDemand(const Player* player) const {
+    if (!player) return 1.0f;
+    
+    // Simple demand calculation based on player role
+    std::string role = player->getRole();
+    if (role == "All-rounder") return 1.5f;
+    if (role == "Batsman") return 1.3f;
+    if (role == "Bowler") return 1.2f;
+    if (role == "Wicketkeeper") return 1.4f;
+    
+    return 1.0f;
+}
+
+std::vector<std::string> AuctionManager::getInterestedTeams(const Player* player) const {
+    std::vector<std::string> interested;
+    
+    for (const auto& [teamName, budget] : teamBudgets) {
+        // Simple logic: teams with budget are interested
+        if (budget.remainingBudget > 50.0f) {
+            interested.push_back(teamName);
+        }
+    }
+    
+    return interested;
+}
+
+void AuctionManager::logBid(const std::string& teamName, float amount, const std::string& reason) {
+    std::cout << "Bid logged: " << teamName << " - " << amount << " lakhs (" << reason << ")" << std::endl;
+}
+
+void AuctionManager::updateVisualizer() {
+    if (visualizer) {
+        // Update visualizer with current auction state
+    }
+}
+
+void AuctionManager::triggerCallbacks() {
+    // Trigger any pending callbacks
+}
+
+std::string AuctionManager::formatCurrency(float amount) const {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(2) << amount << " lakhs";
+    return oss.str();
+}
+
+std::string AuctionManager::formatTime(int seconds) const {
+    int minutes = seconds / 60;
+    int secs = seconds % 60;
+    std::ostringstream oss;
+    oss << std::setfill('0') << std::setw(2) << minutes << ":" << std::setfill('0') << std::setw(2) << secs;
+    return oss.str();
+}
+
+void AuctionManager::onBidWon(const std::string& teamName, float finalBid) {
+    currentLot.isSold = true;
+    currentLot.soldTo = teamName;
+    currentLot.finalPrice = finalBid;
+    currentLot.endTime = std::chrono::steady_clock::now();
+    
+    currentSession.soldPlayers++;
     
     // Update team budget
-    for (auto& budget : teamBudgets) {
-        if (budget.teamName == teamName) {
-            budget.playersBought++;
-            break;
-        }
+    updateTeamBudget(teamName, finalBid);
+    
+    // Update visualizer
+    if (visualizer) {
+        visualizer->onBidWon(teamName, finalBid);
     }
     
-    if (playerSoldCallback) {
-        playerSoldCallback(player, teamName, amount);
+    // Trigger callbacks
+    if (lotSoldCallback) {
+        lotSoldCallback(currentLot.player->getName(), teamName, finalBid);
     }
+    
+    std::cout << "Player sold: " << currentLot.player->getName() << " to " << teamName << " for " << finalBid << " lakhs" << std::endl;
+    
+    // Move to next lot
+    nextLot();
 }
 
-void AuctionManager::MarkPlayerUnsold(Player* player) {
-    if (currentItem) {
-        currentItem->phase = AuctionPhase::UNSOLD;
-    }
-}
-
-void AuctionManager::ApplyAggressiveStrategy(const std::string& teamName, Player* player) {
-    // TODO: Implement aggressive bidding strategy
-}
-
-void AuctionManager::ApplyConservativeStrategy(const std::string& teamName, Player* player) {
-    // TODO: Implement conservative bidding strategy
-}
-
-void AuctionManager::ApplyBalancedStrategy(const std::string& teamName, Player* player) {
-    // TODO: Implement balanced bidding strategy
-}
-
-void AuctionManager::ApplyYouthStrategy(const std::string& teamName, Player* player) {
-    // TODO: Implement youth-focused bidding strategy
-}
-
-void AuctionManager::ApplyExperienceStrategy(const std::string& teamName, Player* player) {
-    // TODO: Implement experience-focused bidding strategy
-}
