@@ -602,7 +602,7 @@ void IPLManager::showAuction() {
     // Only run auction if user squad < 18
     if (auctionComplete) {
         std::cout << "Auction complete!\n";
-        std::cout << "Type 'continue' to proceed to the season." << std::endl;
+        std::cout << "Type 5 to proceed to the season." << std::endl;
         std::cout << "Enter your choice: ";
         return;
     }
