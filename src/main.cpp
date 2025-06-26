@@ -206,6 +206,21 @@ private:
     
     // Helper: Get arrow key input
     int getArrowKeyInput();
+    
+    // Helper: Validate team squad requirements
+    bool validateSquadRequirements(const AITeam& team);
+    
+    // Helper: Get team squad statistics
+    struct SquadStats {
+        int totalPlayers;
+        int wicketKeepers;
+        int allRounders;
+        int bowlers;
+        int batsmen;
+        int indians;
+        int overseas;
+    };
+    SquadStats getSquadStats(const AITeam& team);
 };
 
 // Constructor
@@ -362,6 +377,8 @@ void IPLManager::handleInput() {
                 currentState = GameState::LEAGUE_TABLE;
             } else if (input == "match") {
                 currentState = GameState::MATCH_SIMULATION;
+            } else if (input == "squad") {
+                showDetailedSquad();
             } else if (input == "continue") {
                 if (currentMatchIndex < seasonFixtures.size()) {
                     currentState = GameState::MATCH_SIMULATION;
@@ -379,6 +396,9 @@ void IPLManager::handleInput() {
                     simulateMatch(seasonFixtures[currentMatchIndex]);
                     currentMatchIndex++;
                     updateLeagueTable();
+                    
+                    // Auto-simulate other matches that don't involve the manager's team
+                    autoSimulateOtherMatches();
                 }
             }
             break;
@@ -1593,11 +1613,37 @@ void IPLManager::simulateAuction() {
     
     // Simulate auction for each player
     for (const auto& player : auctionPool) {
-        // Find eligible teams (budget, squad size, overseas limits)
+        // Find eligible teams (budget, squad size, overseas limits, and role requirements)
         std::vector<AITeam*> eligibleTeams;
         for (auto& ai : aiTeams) {
-            if (ai.budget >= player.price && ai.squad.size() < 25 && 
-                (player.nationality == "Indian" || ai.overseasCount < 8)) {
+            // Basic eligibility checks
+            if (ai.budget < player.price || ai.squad.size() >= 25) {
+                continue;
+            }
+            
+            // Overseas player limit check
+            if (player.nationality == "Overseas" && ai.overseasCount >= 8) {
+                continue;
+            }
+            
+            // Check if team needs this role type
+            SquadStats stats = getSquadStats(ai);
+            bool needsThisRole = false;
+            
+            if (player.role == "Wicket-keeper" && stats.wicketKeepers < 1) {
+                needsThisRole = true;
+            } else if (player.role == "All-rounder" && stats.allRounders < 3) {
+                needsThisRole = true;
+            } else if (player.role == "Bowler" && stats.bowlers < 5) {
+                needsThisRole = true;
+            } else if (player.role == "Batsman" && stats.batsmen < 5) {
+                needsThisRole = true;
+            } else if (stats.totalPlayers < 18) {
+                // If team has less than 18 players, they need any player
+                needsThisRole = true;
+            }
+            
+            if (needsThisRole) {
                 eligibleTeams.push_back(&ai);
             }
         }
@@ -2245,6 +2291,61 @@ int IPLManager::getArrowKeyInput() {
     }
     
     return 0; // No special key
+}
+
+// Helper: Validate team squad requirements
+bool IPLManager::validateSquadRequirements(const AITeam& team) {
+    SquadStats stats = getSquadStats(team);
+    
+    // Check minimum squad size
+    if (stats.totalPlayers < 18) {
+        return false;
+    }
+    
+    // Check minimum role requirements
+    if (stats.wicketKeepers < 1) {
+        return false;
+    }
+    if (stats.allRounders < 3) {
+        return false;
+    }
+    if (stats.bowlers < 5) {
+        return false;
+    }
+    if (stats.batsmen < 5) {
+        return false;
+    }
+    
+    // Check overseas player limit
+    if (stats.overseas > 8) {
+        return false;
+    }
+    
+    return true;
+}
+
+// Helper: Get team squad statistics
+IPLManager::SquadStats IPLManager::getSquadStats(const AITeam& team) {
+    SquadStats stats;
+    stats.totalPlayers = team.squad.size();
+    stats.wicketKeepers = 0;
+    stats.allRounders = 0;
+    stats.bowlers = 0;
+    stats.batsmen = 0;
+    stats.indians = 0;
+    stats.overseas = 0;
+    
+    for (const auto& player : team.squad) {
+        if (player.role == "Wicket-keeper") stats.wicketKeepers++;
+        else if (player.role == "All-rounder") stats.allRounders++;
+        else if (player.role == "Bowler") stats.bowlers++;
+        else if (player.role == "Batsman") stats.batsmen++;
+        
+        if (player.nationality == "Indian") stats.indians++;
+        else stats.overseas++;
+    }
+    
+    return stats;
 }
 
 int main(int argc, char* argv[]) {
