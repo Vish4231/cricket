@@ -194,6 +194,18 @@ private:
     
     // Helper: Create batting order based on batting approaches
     std::vector<IPLPlayer*> createBattingOrder(AITeam& team);
+    
+    // Helper: Auto-simulate matches not involving manager's team
+    void autoSimulateOtherMatches();
+    
+    // Helper: Show squad with detailed information
+    void showDetailedSquad();
+    
+    // Helper: Select player using arrow keys
+    IPLPlayer* selectPlayerWithArrows(const std::vector<IPLPlayer*>& players, const std::string& title);
+    
+    // Helper: Get arrow key input
+    int getArrowKeyInput();
 };
 
 // Constructor
@@ -1074,23 +1086,103 @@ void IPLManager::simulateMatch(Match& match) {
                 overWickets++;
                 team1BatterIndex++; // Next batter
                 if (currentBatter) {
-                    event = "WICKET! " + currentBatter->name + " out! ";
+                    std::vector<std::string> wicketCommentary = {
+                        "WICKET! " + currentBatter->name + " is clean bowled!",
+                        "WICKET! " + currentBatter->name + " edges it to the keeper!",
+                        "WICKET! " + currentBatter->name + " caught at mid-wicket!",
+                        "WICKET! " + currentBatter->name + " LBW! That's plumb!",
+                        "WICKET! " + currentBatter->name + " stumped! Brilliant work by the keeper!",
+                        "WICKET! " + currentBatter->name + " run out! What a mix-up!",
+                        "WICKET! " + currentBatter->name + " caught at deep mid-wicket!",
+                        "WICKET! " + currentBatter->name + " bowled around the legs!"
+                    };
+                    event = wicketCommentary[rand() % wicketCommentary.size()] + " ";
                 } else {
                     event = "WICKET! ";
                 }
             }
             if (runs == 4) {
                 if (currentBatter) {
-                    event += "FOUR! " + currentBatter->name + " hits a boundary! ";
+                    std::vector<std::string> fourCommentary = {
+                        "FOUR! " + currentBatter->name + " drives it beautifully through the covers!",
+                        "FOUR! " + currentBatter->name + " cuts it past point for a boundary!",
+                        "FOUR! " + currentBatter->name + " pulls it to the mid-wicket boundary!",
+                        "FOUR! " + currentBatter->name + " flicks it fine for four!",
+                        "FOUR! " + currentBatter->name + " square drives it to the boundary!",
+                        "FOUR! " + currentBatter->name + " plays a lovely shot through extra cover!",
+                        "FOUR! " + currentBatter->name + " hits it over the bowler's head!",
+                        "FOUR! " + currentBatter->name + " guides it past third man!"
+                    };
+                    event += fourCommentary[rand() % fourCommentary.size()] + " ";
                 } else {
                     event += "FOUR! ";
                 }
             }
             if (runs == 6) {
                 if (currentBatter) {
-                    event += "SIX! " + currentBatter->name + " hits a maximum! ";
+                    std::vector<std::string> sixCommentary = {
+                        "SIX! " + currentBatter->name + " launches it over long-on for a maximum!",
+                        "SIX! " + currentBatter->name + " smashes it over mid-wicket!",
+                        "SIX! " + currentBatter->name + " hits it over the covers for six!",
+                        "SIX! " + currentBatter->name + " pulls it over square leg!",
+                        "SIX! " + currentBatter->name + " drives it straight down the ground!",
+                        "SIX! " + currentBatter->name + " scoops it over fine leg!",
+                        "SIX! " + currentBatter->name + " reverse sweeps it over point!",
+                        "SIX! " + currentBatter->name + " hits it over long-off!"
+                    };
+                    event += sixCommentary[rand() % sixCommentary.size()] + " ";
                 } else {
                     event += "SIX! ";
+                }
+            }
+            if (runs == 1) {
+                if (currentBatter) {
+                    std::vector<std::string> singleCommentary = {
+                        currentBatter->name + " takes a quick single.",
+                        currentBatter->name + " works it to mid-wicket for one.",
+                        currentBatter->name + " pushes it to cover for a single.",
+                        currentBatter->name + " taps it to point for one run."
+                    };
+                    if (rand() % 10 < 3) { // 30% chance for single commentary
+                        event += singleCommentary[rand() % singleCommentary.size()] + " ";
+                    }
+                }
+            }
+            if (runs == 2) {
+                if (currentBatter) {
+                    std::vector<std::string> twoCommentary = {
+                        currentBatter->name + " runs hard for two.",
+                        currentBatter->name + " places it in the gap for a couple.",
+                        currentBatter->name + " works it to deep square leg for two."
+                    };
+                    if (rand() % 10 < 4) { // 40% chance for two commentary
+                        event += twoCommentary[rand() % twoCommentary.size()] + " ";
+                    }
+                }
+            }
+            if (runs == 3) {
+                if (currentBatter) {
+                    std::vector<std::string> threeCommentary = {
+                        currentBatter->name + " runs three! Good running between the wickets.",
+                        currentBatter->name + " places it perfectly for three runs."
+                    };
+                    if (rand() % 10 < 5) { // 50% chance for three commentary
+                        event += threeCommentary[rand() % threeCommentary.size()] + " ";
+                    }
+                }
+            }
+            if (runs == 0) {
+                if (currentBatter) {
+                    std::vector<std::string> dotCommentary = {
+                        currentBatter->name + " defends it solidly.",
+                        currentBatter->name + " leaves it alone.",
+                        currentBatter->name + " blocks it back to the bowler.",
+                        currentBatter->name + " plays it to mid-off.",
+                        currentBatter->name + " lets it go through to the keeper."
+                    };
+                    if (rand() % 10 < 2) { // 20% chance for dot commentary
+                        event += dotCommentary[rand() % dotCommentary.size()] + " ";
+                    }
                 }
             }
             if (!event.empty()) {
@@ -1182,23 +1274,103 @@ void IPLManager::simulateMatch(Match& match) {
                 overWickets++;
                 team2BatterIndex++; // Next batter
                 if (currentBatter) {
-                    event = "WICKET! " + currentBatter->name + " out! ";
+                    std::vector<std::string> wicketCommentary = {
+                        "WICKET! " + currentBatter->name + " is clean bowled!",
+                        "WICKET! " + currentBatter->name + " edges it to the keeper!",
+                        "WICKET! " + currentBatter->name + " caught at mid-wicket!",
+                        "WICKET! " + currentBatter->name + " LBW! That's plumb!",
+                        "WICKET! " + currentBatter->name + " stumped! Brilliant work by the keeper!",
+                        "WICKET! " + currentBatter->name + " run out! What a mix-up!",
+                        "WICKET! " + currentBatter->name + " caught at deep mid-wicket!",
+                        "WICKET! " + currentBatter->name + " bowled around the legs!"
+                    };
+                    event = wicketCommentary[rand() % wicketCommentary.size()] + " ";
                 } else {
                     event = "WICKET! ";
                 }
             }
             if (runs == 4) {
                 if (currentBatter) {
-                    event += "FOUR! " + currentBatter->name + " hits a boundary! ";
+                    std::vector<std::string> fourCommentary = {
+                        "FOUR! " + currentBatter->name + " drives it beautifully through the covers!",
+                        "FOUR! " + currentBatter->name + " cuts it past point for a boundary!",
+                        "FOUR! " + currentBatter->name + " pulls it to the mid-wicket boundary!",
+                        "FOUR! " + currentBatter->name + " flicks it fine for four!",
+                        "FOUR! " + currentBatter->name + " square drives it to the boundary!",
+                        "FOUR! " + currentBatter->name + " plays a lovely shot through extra cover!",
+                        "FOUR! " + currentBatter->name + " hits it over the bowler's head!",
+                        "FOUR! " + currentBatter->name + " guides it past third man!"
+                    };
+                    event += fourCommentary[rand() % fourCommentary.size()] + " ";
                 } else {
                     event += "FOUR! ";
                 }
             }
             if (runs == 6) {
                 if (currentBatter) {
-                    event += "SIX! " + currentBatter->name + " hits a maximum! ";
+                    std::vector<std::string> sixCommentary = {
+                        "SIX! " + currentBatter->name + " launches it over long-on for a maximum!",
+                        "SIX! " + currentBatter->name + " smashes it over mid-wicket!",
+                        "SIX! " + currentBatter->name + " hits it over the covers for six!",
+                        "SIX! " + currentBatter->name + " pulls it over square leg!",
+                        "SIX! " + currentBatter->name + " drives it straight down the ground!",
+                        "SIX! " + currentBatter->name + " scoops it over fine leg!",
+                        "SIX! " + currentBatter->name + " reverse sweeps it over point!",
+                        "SIX! " + currentBatter->name + " hits it over long-off!"
+                    };
+                    event += sixCommentary[rand() % sixCommentary.size()] + " ";
                 } else {
                     event += "SIX! ";
+                }
+            }
+            if (runs == 1) {
+                if (currentBatter) {
+                    std::vector<std::string> singleCommentary = {
+                        currentBatter->name + " takes a quick single.",
+                        currentBatter->name + " works it to mid-wicket for one.",
+                        currentBatter->name + " pushes it to cover for a single.",
+                        currentBatter->name + " taps it to point for one run."
+                    };
+                    if (rand() % 10 < 3) { // 30% chance for single commentary
+                        event += singleCommentary[rand() % singleCommentary.size()] + " ";
+                    }
+                }
+            }
+            if (runs == 2) {
+                if (currentBatter) {
+                    std::vector<std::string> twoCommentary = {
+                        currentBatter->name + " runs hard for two.",
+                        currentBatter->name + " places it in the gap for a couple.",
+                        currentBatter->name + " works it to deep square leg for two."
+                    };
+                    if (rand() % 10 < 4) { // 40% chance for two commentary
+                        event += twoCommentary[rand() % twoCommentary.size()] + " ";
+                    }
+                }
+            }
+            if (runs == 3) {
+                if (currentBatter) {
+                    std::vector<std::string> threeCommentary = {
+                        currentBatter->name + " runs three! Good running between the wickets.",
+                        currentBatter->name + " places it perfectly for three runs."
+                    };
+                    if (rand() % 10 < 5) { // 50% chance for three commentary
+                        event += threeCommentary[rand() % threeCommentary.size()] + " ";
+                    }
+                }
+            }
+            if (runs == 0) {
+                if (currentBatter) {
+                    std::vector<std::string> dotCommentary = {
+                        currentBatter->name + " defends it solidly.",
+                        currentBatter->name + " leaves it alone.",
+                        currentBatter->name + " blocks it back to the bowler.",
+                        currentBatter->name + " plays it to mid-off.",
+                        currentBatter->name + " lets it go through to the keeper."
+                    };
+                    if (rand() % 10 < 2) { // 20% chance for dot commentary
+                        event += dotCommentary[rand() % dotCommentary.size()] + " ";
+                    }
                 }
             }
             if (!event.empty()) {
@@ -1853,6 +2025,36 @@ std::vector<IPLPlayer*> IPLManager::createBattingOrder(AITeam& team) {
         }
     }
     return battingOrder;
+}
+
+// Helper: Auto-simulate matches not involving manager's team
+void IPLManager::autoSimulateOtherMatches() {
+    // Implement auto-simulation logic for matches not involving manager's team
+    // This is a placeholder and should be replaced with actual auto-simulation logic
+    std::cout << "Auto-simulating other matches...\n";
+}
+
+// Helper: Show squad with detailed information
+void IPLManager::showDetailedSquad() {
+    // Implement detailed squad viewing logic
+    // This is a placeholder and should be replaced with actual detailed squad viewing logic
+    std::cout << "Showing detailed squad...\n";
+}
+
+// Helper: Select player using arrow keys
+IPLPlayer* IPLManager::selectPlayerWithArrows(const std::vector<IPLPlayer*>& players, const std::string& title) {
+    // Implement player selection using arrow keys
+    // This is a placeholder and should be replaced with actual player selection logic
+    std::cout << "Selecting player with arrows...\n";
+    return nullptr;
+}
+
+// Helper: Get arrow key input
+int IPLManager::getArrowKeyInput() {
+    // Implement arrow key input handling
+    // This is a placeholder and should be replaced with actual arrow key input logic
+    std::cout << "Getting arrow key input...\n";
+    return 0;
 }
 
 int main(int argc, char* argv[]) {
