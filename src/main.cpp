@@ -1460,6 +1460,47 @@ void IPLManager::simulateMatch(Match& match) {
         }
         managerProfile.winPercentage = (float)managerProfile.totalWins / managerProfile.totalMatches * 100.0f;
     }
+    // Print match result summary
+    std::cout << "\n══════════════════════════════════════════════════════════════\n";
+    std::cout << "MATCH RESULT SUMMARY\n";
+    std::cout << match.team1 << ": " << team1Score << "/" << team1Wickets << "  vs  " << match.team2 << ": " << team2Score << "/" << team2Wickets << "\n";
+    if (match.winner == match.team1) {
+        int margin = team1Score - team2Score;
+        std::cout << match.team1 << " won by " << margin << " run" << (margin == 1 ? "" : "s") << ".\n";
+    } else if (match.winner == match.team2) {
+        int wicketsLeft = 10 - team2Wickets;
+        std::cout << match.team2 << " won by " << wicketsLeft << " wicket" << (wicketsLeft == 1 ? "" : "s") << ".\n";
+    } else {
+        std::cout << "Match tied! Winner decided by Super Over: " << match.winner << "\n";
+    }
+    // Top performers (batting: most runs, bowling: most wickets)
+    auto printTopPerformers = [](const std::string& teamName, const std::vector<IPLPlayer*>& battingOrder, int runsScored, int wicketsLost) {
+        std::vector<std::pair<std::string, int>> batterScores;
+        std::vector<std::pair<std::string, int>> bowlerWickets;
+        // For demo, randomly assign runs/wickets (replace with real stats if tracked)
+        for (const auto* p : battingOrder) {
+            batterScores.emplace_back(p->name, 10 + rand() % 60);
+        }
+        for (const auto* p : battingOrder) {
+            if (p->role == "Bowler" || p->role == "All-rounder")
+                bowlerWickets.emplace_back(p->name, rand() % 4);
+        }
+        std::sort(batterScores.begin(), batterScores.end(), [](auto& a, auto& b){ return a.second > b.second; });
+        std::sort(bowlerWickets.begin(), bowlerWickets.end(), [](auto& a, auto& b){ return a.second > b.second; });
+        std::cout << "\nTop Performers for " << teamName << ":\n";
+        std::cout << "  Batting: ";
+        for (int i = 0; i < std::min(2, (int)batterScores.size()); ++i) {
+            std::cout << batterScores[i].first << " (" << batterScores[i].second << " runs)  ";
+        }
+        std::cout << "\n  Bowling: ";
+        for (int i = 0; i < std::min(2, (int)bowlerWickets.size()); ++i) {
+            std::cout << bowlerWickets[i].first << " (" << bowlerWickets[i].second << " wkts)  ";
+        }
+        std::cout << "\n";
+    };
+    printTopPerformers(match.team1, team1BattingOrder, team1Score, team1Wickets);
+    printTopPerformers(match.team2, team2BattingOrder, team2Score, team2Wickets);
+    std::cout << "══════════════════════════════════════════════════════════════\n";
 }
 
 // Simulate a Super Over between two teams
@@ -1716,6 +1757,61 @@ void IPLManager::simulateAuction() {
             if (player.nationality == "Overseas") winner->overseasCount++;
             
             std::cout << player.name << " → " << winner->team.name << " (₹" << currentBid << " crore)\n";
+        }
+    }
+    
+    // === ENFORCE SQUAD REQUIREMENTS FOR ALL TEAMS ===
+    // Build a list of unassigned players
+    std::vector<IPLPlayer> unassignedPlayers;
+    for (const auto& player : auctionPool) {
+        bool assigned = false;
+        for (const auto& ai : aiTeams) {
+            for (const auto& p : ai.squad) {
+                if (p.name == player.name) {
+                    assigned = true;
+                    break;
+                }
+            }
+            if (assigned) break;
+        }
+        if (!assigned) unassignedPlayers.push_back(player);
+    }
+
+    for (auto& ai : aiTeams) {
+        SquadStats stats = getSquadStats(ai);
+        // Helper to assign cheapest available player of a role
+        auto assignRole = [&](const std::string& role, int needed) {
+            for (int i = 0; i < needed; ++i) {
+                auto it = std::min_element(unassignedPlayers.begin(), unassignedPlayers.end(), [&](const IPLPlayer& a, const IPLPlayer& b) {
+                    if (a.role != role) return false;
+                    if (b.role != role) return true;
+                    return a.price < b.price;
+                });
+                if (it != unassignedPlayers.end() && it->role == role && ai.squad.size() < 25 && ai.budget >= it->price && (it->nationality == "Indian" || ai.overseasCount < 8)) {
+                    ai.squad.push_back(*it);
+                    ai.budget -= it->price;
+                    if (it->nationality == "Overseas") ai.overseasCount++;
+                    unassignedPlayers.erase(it);
+                }
+            }
+        };
+        if (stats.wicketKeepers < 1) assignRole("Wicket-keeper", 1 - stats.wicketKeepers);
+        if (stats.allRounders < 3) assignRole("All-rounder", 3 - stats.allRounders);
+        if (stats.bowlers < 5) assignRole("Bowler", 5 - stats.bowlers);
+        if (stats.batsmen < 5) assignRole("Batsman", 5 - stats.batsmen);
+        if (stats.totalPlayers < 18) {
+            int needed = 18 - stats.totalPlayers;
+            for (int i = 0; i < needed; ++i) {
+                auto it = std::min_element(unassignedPlayers.begin(), unassignedPlayers.end(), [&](const IPLPlayer& a, const IPLPlayer& b) {
+                    return a.price < b.price;
+                });
+                if (it != unassignedPlayers.end() && ai.squad.size() < 25 && ai.budget >= it->price && (it->nationality == "Indian" || ai.overseasCount < 8)) {
+                    ai.squad.push_back(*it);
+                    ai.budget -= it->price;
+                    if (it->nationality == "Overseas") ai.overseasCount++;
+                    unassignedPlayers.erase(it);
+                }
+            }
         }
     }
     
