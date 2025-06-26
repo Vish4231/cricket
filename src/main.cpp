@@ -311,7 +311,11 @@ void IPLManager::handleInput() {
                 std::cout << "Enter your manager name: ";
                 std::getline(std::cin, managerProfile.name);
             } else if (input == "2") {
-                std::cout << "Select avatar (1-5): ";
+                std::cout << "Select avatar:\n";
+                for (int i = 1; i <= 5; ++i) {
+                    std::cout << "  " << i << ". Avatar_" << i << "\n";
+                }
+                std::cout << "Enter avatar number (1-5): ";
                 std::string avatarChoice = getInput();
                 int choice = std::stoi(avatarChoice);
                 if (choice >= 1 && choice <= 5) {
@@ -2366,50 +2370,18 @@ void IPLManager::showDetailedSquad() {
 // Helper: Select player using arrow keys
 IPLPlayer* IPLManager::selectPlayerWithArrows(const std::vector<IPLPlayer*>& players, const std::string& title) {
     if (players.empty()) return nullptr;
-    
-    int selectedIndex = 0;
-    bool selectionMade = false;
-    
-    while (!selectionMade) {
-        clearScreen();
-        printBanner(title);
-        std::cout << "\n";
-        
-        std::cout << "Use ↑/↓ arrows to select, Enter to confirm, Esc to cancel\n\n";
-        
-        for (size_t i = 0; i < players.size(); ++i) {
-            if (i == selectedIndex) {
-                std::cout << "  ▶ "; // Selected indicator
-            } else {
-                std::cout << "    ";
-            }
-            
-            const auto& player = players[i];
-            std::cout << std::left << std::setw(25) << player->name
-                      << std::setw(12) << player->role
-                      << std::setw(10) << player->battingApproach
-                      << std::setw(8) << std::fixed << std::setprecision(0) << player->battingRating
-                      << std::setw(8) << std::fixed << std::setprecision(0) << player->bowlingRating
-                      << std::setw(8) << std::fixed << std::setprecision(0) << player->fieldingRating << "\n";
-        }
-        
-        int key = getArrowKeyInput();
-        switch (key) {
-            case 1: // Up arrow
-                if (selectedIndex > 0) selectedIndex--;
-                break;
-            case 2: // Down arrow
-                if (selectedIndex < players.size() - 1) selectedIndex++;
-                break;
-            case 5: // Enter
-                selectionMade = true;
-                break;
-            case 6: // Escape
-                return nullptr;
-        }
+    std::cout << "\n" << title << "\n";
+    for (size_t i = 0; i < players.size(); ++i) {
+        std::cout << "  " << (i+1) << ". " << players[i]->name << " (" << players[i]->role << ", " << players[i]->battingApproach << ")\n";
     }
-    
-    return players[selectedIndex];
+    std::cout << "Enter number to select, or 0 to cancel: ";
+    std::string input;
+    std::getline(std::cin, input);
+    int idx = std::stoi(input);
+    if (idx >= 1 && idx <= (int)players.size()) {
+        return players[idx-1];
+    }
+    return nullptr;
 }
 
 // Helper: Get arrow key input
