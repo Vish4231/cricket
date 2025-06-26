@@ -1622,6 +1622,7 @@ void IPLManager::manualAuction() {
     
     // Show player up for auction
     std::cout << "\nPlayer up for auction: " << player.name << " (" << player.role << ", " << player.nationality << ")\n";
+    std::cout << "Batting Approach: " << player.battingApproach << "\n";
     std::cout << "Base Price: ₹" << player.price << " crore\n";
     
     // Bidding
