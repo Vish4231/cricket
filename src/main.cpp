@@ -134,6 +134,9 @@ private:
     // AI Data
     std::vector<AITeam> aiTeams;
     
+    // Auction state
+    bool auctionComplete = false;
+    
     // UI Methods
     void showMainMenu();
     void showAvatarCustomization();
@@ -1175,10 +1178,168 @@ void IPLManager::showCurrentSquad() {
 }
 
 void IPLManager::manualAuction() {
-    // Implementation of manual auction functionality
-    std::cout << "Manual auction functionality not implemented yet.\n";
-    std::cout << "Press Enter to continue...";
-    std::cin.get();
+    printBanner("🎯 MANUAL AUCTION");
+    std::cout << "\n";
+    
+    // User's team
+    AITeam* userTeam = nullptr;
+    for (auto& ai : aiTeams) {
+        if (ai.team.name == managerProfile.selectedTeam) {
+            userTeam = &ai;
+            break;
+        }
+    }
+    if (!userTeam) return;
+    
+    // Auction pool (for demo, use availablePlayers)
+    static size_t playerIndex = 0;
+    if (playerIndex >= availablePlayers.size() || userTeam->squad.size() >= 25) {
+        auctionComplete = true;
+        std::cout << "Auction complete!\n";
+        std::cout << "Type 'continue' to proceed to the season." << std::endl;
+        std::cout << "Enter your choice: ";
+        return;
+    }
+    IPLPlayer& player = availablePlayers[playerIndex];
+    
+    // Show player up for auction
+    std::cout << "\nPlayer up for auction: " << player.name << " (" << player.role << ", " << player.nationality << ")\n";
+    std::cout << "Base Price: ₹" << player.price << " crore\n";
+    
+    // Bidding
+    float currentBid = player.price;
+    std::string currentBidder = "None";
+    std::map<std::string, bool> activeBidders;
+    const float MAX_BID = 30.0f; // Maximum bid limit of ₹30 crore
+    
+    for (auto& ai : aiTeams) {
+        // Only teams with squad < 25 and budget > base price can bid
+        if (ai.squad.size() < 25 && ai.budget >= player.price) {
+            activeBidders[ai.team.name] = true;
+        }
+    }
+    // User always active if eligible
+    if (userTeam->squad.size() < 25 && userTeam->budget >= player.price) {
+        activeBidders[userTeam->team.name] = true;
+    }
+    
+    bool userPassed = false;
+    int round = 0;
+    while (true) {
+        bool anyBid = false;
+        for (auto& ai : aiTeams) {
+            if (!activeBidders[ai.team.name]) continue;
+            if (ai.team.name == userTeam->team.name) {
+                // User's turn
+                if (userPassed) continue;
+                std::cout << "\nCurrent bid: ₹" << currentBid << " crore by " << currentBidder << std::endl;
+                std::cout << "Your budget: ₹" << userTeam->budget << " crore, Squad: " << userTeam->squad.size() << "/25, Overseas: " << userTeam->overseasCount << "/8" << std::endl;
+                
+                // Check if next bid would exceed maximum
+                if (currentBid + 0.5f > MAX_BID) {
+                    std::cout << "Maximum bid limit of ₹" << MAX_BID << " crore reached!" << std::endl;
+                    userPassed = true;
+                    activeBidders[userTeam->team.name] = false;
+                    continue;
+                }
+                
+                std::cout << "Do you want to bid ₹" << (currentBid + 0.5f) << " crore? (bid/pass): ";
+                std::string input;
+                std::getline(std::cin, input);
+                if (input == "bid" && userTeam->budget >= currentBid + 0.5f && userTeam->squad.size() < 25 && (player.nationality == "Indian" || userTeam->overseasCount < 8)) {
+                    currentBid += 0.5f;
+                    currentBidder = userTeam->team.name;
+                    anyBid = true;
+                } else {
+                    userPassed = true;
+                    activeBidders[userTeam->team.name] = false;
+                }
+            } else {
+                // AI's turn
+                if (ai.squad.size() >= 25 || ai.budget < currentBid + 0.5f) {
+                    activeBidders[ai.team.name] = false;
+                    continue;
+                }
+                
+                // Check if next bid would exceed maximum
+                if (currentBid + 0.5f > MAX_BID) {
+                    activeBidders[ai.team.name] = false;
+                    continue;
+                }
+                
+                // AI logic based on strategy
+                bool aiBid = false;
+                float value = (player.battingRating + player.bowlingRating + player.fieldingRating) / 3.0f;
+                float maxBid = player.price;
+                switch (ai.strategy) {
+                    case AIStrategy::AGGRESSIVE:
+                        maxBid = std::min(value * 1.5f, MAX_BID);
+                        break;
+                    case AIStrategy::BALANCED:
+                        maxBid = std::min(value * 1.2f, MAX_BID);
+                        break;
+                    case AIStrategy::CONSERVATIVE:
+                        maxBid = std::min(value * 1.0f, MAX_BID);
+                        break;
+                    case AIStrategy::WILDCARD:
+                        maxBid = std::min(value * (1.0f + (rand() % 100) / 200.0f), MAX_BID); // 1.0-1.5x
+                        break;
+                }
+                // AI only bids if under maxBid, has budget, and squad/overseas room
+                if (currentBid + 0.5f <= maxBid && ai.budget >= currentBid + 0.5f && ai.squad.size() < 25 && (player.nationality == "Indian" || ai.overseasCount < 8)) {
+                    if (rand() % 100 < 70) { // 70% chance to bid if eligible
+                        currentBid += 0.5f;
+                        currentBidder = ai.team.name;
+                        anyBid = true;
+                        std::cout << ai.team.name << " bids ₹" << currentBid << " crore!\n";
+                    } else {
+                        activeBidders[ai.team.name] = false;
+                        std::cout << ai.team.name << " passes.\n";
+                    }
+                } else {
+                    activeBidders[ai.team.name] = false;
+                    std::cout << ai.team.name << " passes.\n";
+                }
+            }
+        }
+        // If only one bidder left, award player
+        int biddersLeft = 0;
+        std::string winner;
+        for (const auto& [name, active] : activeBidders) {
+            if (active) {
+                biddersLeft++;
+                winner = name;
+            }
+        }
+        if (biddersLeft <= 1) {
+            if (winner.empty()) winner = currentBidder;
+            std::cout << "\nPlayer " << player.name << " sold to " << winner << " for ₹" << currentBid << " crore!\n";
+            // Add player to winner's squad
+            for (auto& ai : aiTeams) {
+                if (ai.team.name == winner) {
+                    ai.squad.push_back(player);
+                    ai.budget -= currentBid;
+                    if (player.nationality == "Overseas") ai.overseasCount++;
+                    break;
+                }
+            }
+            // If user won, update userTeam pointer
+            if (winner == userTeam->team.name) {
+                userTeam = nullptr;
+                for (auto& ai : aiTeams) {
+                    if (ai.team.name == managerProfile.selectedTeam) {
+                        userTeam = &ai;
+                        break;
+                    }
+                }
+            }
+            break;
+        }
+        if (!anyBid) break; // No more bids
+    }
+    playerIndex++;
+    std::cout << "\nType 'continue' to auction next player or 'back' to exit auction." << std::endl;
+    std::cout << "Enter your choice: ";
 }
 
 int main(int argc, char* argv[]) {
