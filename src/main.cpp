@@ -2087,9 +2087,84 @@ void IPLManager::autoSimulateOtherMatches() {
 
 // Helper: Show squad with detailed information
 void IPLManager::showDetailedSquad() {
-    // Implement detailed squad viewing logic
-    // This is a placeholder and should be replaced with actual detailed squad viewing logic
-    std::cout << "Showing detailed squad...\n";
+    printBanner("👥 DETAILED SQUAD VIEW");
+    std::cout << "\n";
+    
+    // Find user's team
+    AITeam* userTeam = nullptr;
+    for (auto& ai : aiTeams) {
+        if (ai.team.name == managerProfile.selectedTeam) {
+            userTeam = &ai;
+            break;
+        }
+    }
+    
+    if (!userTeam) {
+        std::cout << "Team not found!\n";
+        return;
+    }
+    
+    std::cout << "╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗\n";
+    std::cout << "║  " << std::left << std::setw(50) << managerProfile.selectedTeam << "║\n";
+    std::cout << "║  Budget: ₹" << std::fixed << std::setprecision(1) << std::setw(8) << userTeam->budget << " crore";
+    std::cout << "  Squad: " << userTeam->squad.size() << "/25";
+    std::cout << "  Overseas: " << userTeam->overseasCount << "/8" << std::setw(15) << " ║\n";
+    std::cout << "╠══════════════════════════════════════════════════════════════════════════════════════════════════════════════╣\n";
+    std::cout << "║  Name                Role      Nationality  Approach   Age   Bat   Bowl  Field  Price   Overall Rating      ║\n";
+    std::cout << "╠══════════════════════════════════════════════════════════════════════════════════════════════════════════════╣\n";
+    
+    for (const auto& player : userTeam->squad) {
+        float avgRating = (player.battingRating + player.bowlingRating + player.fieldingRating) / 3.0f;
+        std::cout << "║  " << std::left << std::setw(20) << player.name
+                  << std::setw(10) << player.role
+                  << std::setw(13) << player.nationality
+                  << std::setw(11) << player.battingApproach
+                  << std::setw(6) << player.age
+                  << std::setw(6) << std::fixed << std::setprecision(0) << player.battingRating
+                  << std::setw(7) << std::fixed << std::setprecision(0) << player.bowlingRating
+                  << std::setw(7) << std::fixed << std::setprecision(0) << player.fieldingRating
+                  << std::setw(8) << std::fixed << std::setprecision(1) << player.price
+                  << std::setw(8) << std::fixed << std::setprecision(1) << avgRating << " ║\n";
+    }
+    std::cout << "╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝\n";
+    
+    // Show team statistics
+    std::cout << "\n📊 TEAM STATISTICS:\n";
+    std::cout << "╔══════════════════════════════════════════════════════════════╗\n";
+    
+    // Count players by role
+    int batsmen = 0, bowlers = 0, allRounders = 0, wicketKeepers = 0;
+    int indians = 0, overseas = 0;
+    float totalBattingRating = 0, totalBowlingRating = 0, totalFieldingRating = 0;
+    
+    for (const auto& player : userTeam->squad) {
+        if (player.role == "Batsman") batsmen++;
+        else if (player.role == "Bowler") bowlers++;
+        else if (player.role == "All-rounder") allRounders++;
+        else if (player.role == "Wicket-keeper") wicketKeepers++;
+        
+        if (player.nationality == "Indian") indians++;
+        else overseas++;
+        
+        totalBattingRating += player.battingRating;
+        totalBowlingRating += player.bowlingRating;
+        totalFieldingRating += player.fieldingRating;
+    }
+    
+    float avgBatting = totalBattingRating / userTeam->squad.size();
+    float avgBowling = totalBowlingRating / userTeam->squad.size();
+    float avgFielding = totalFieldingRating / userTeam->squad.size();
+    
+    std::cout << "║  Role Distribution:                                    ║\n";
+    std::cout << "║    Batsmen: " << std::setw(3) << batsmen << "    Bowlers: " << std::setw(3) << bowlers 
+              << "    All-rounders: " << std::setw(3) << allRounders << "    Wicket-keepers: " << std::setw(3) << wicketKeepers << " ║\n";
+    std::cout << "║  Nationality: Indians " << std::setw(3) << indians << "    Overseas " << std::setw(3) << overseas << "                    ║\n";
+    std::cout << "║  Average Ratings: Bat " << std::fixed << std::setprecision(1) << std::setw(5) << avgBatting 
+              << "    Bowl " << std::setw(5) << avgBowling << "    Field " << std::setw(5) << avgFielding << "        ║\n";
+    std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
+    
+    std::cout << "\nPress Enter to continue...";
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
 // Helper: Select player using arrow keys
