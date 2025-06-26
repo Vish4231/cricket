@@ -296,41 +296,41 @@ void IPLManager::handleInput() {
     
     switch (currentState) {
         case GameState::MAIN_MENU:
-            if (input == "1" || input == "start") {
+            if (input == "1") {
                 currentState = GameState::AVATAR_CUSTOMIZATION;
-            } else if (input == "2" || input == "settings") {
+            } else if (input == "2") {
                 currentState = GameState::SETTINGS;
-            } else if (input == "3" || input == "quit") {
+            } else if (input == "3") {
                 currentState = GameState::EXIT;
                 isRunning = false;
             }
             break;
             
         case GameState::AVATAR_CUSTOMIZATION:
-            if (input == "1" || input == "name") {
+            if (input == "1") {
                 std::cout << "Enter your manager name: ";
                 std::getline(std::cin, managerProfile.name);
-            } else if (input == "2" || input == "avatar") {
+            } else if (input == "2") {
                 std::cout << "Select avatar (1-5): ";
                 std::string avatarChoice = getInput();
                 int choice = std::stoi(avatarChoice);
                 if (choice >= 1 && choice <= 5) {
                     managerProfile.avatar = "Avatar_" + std::to_string(choice);
                 }
-            } else if (input == "3" || input == "continue") {
+            } else if (input == "3") {
                 if (!managerProfile.name.empty()) {
                     currentState = GameState::TEAM_SELECTION;
                 } else {
                     std::cout << "Please enter your name first!" << std::endl;
                     waitForInput();
                 }
-            } else if (input == "back") {
+            } else if (input == "0") {
                 currentState = GameState::MAIN_MENU;
             }
             break;
             
         case GameState::TEAM_SELECTION:
-            if (input == "back") {
+            if (input == "0") {
                 currentState = GameState::AVATAR_CUSTOMIZATION;
             } else {
                 int teamChoice = std::stoi(input);
@@ -342,9 +342,9 @@ void IPLManager::handleInput() {
             break;
             
         case GameState::AUCTION:
-            if (input == "back") {
+            if (input == "0") {
                 currentState = GameState::TEAM_SELECTION;
-            } else if (input == "continue" || input == "5") {
+            } else if (input == "5") {
                 if (auctionComplete) {
                     currentState = GameState::SEASON_CALENDAR;
                     generateSeasonFixtures();
@@ -371,15 +371,15 @@ void IPLManager::handleInput() {
             break;
             
         case GameState::SEASON_CALENDAR:
-            if (input == "back") {
+            if (input == "0") {
                 currentState = GameState::AUCTION;
-            } else if (input == "table") {
+            } else if (input == "1") {
                 currentState = GameState::LEAGUE_TABLE;
-            } else if (input == "match") {
+            } else if (input == "2") {
                 currentState = GameState::MATCH_SIMULATION;
-            } else if (input == "squad") {
+            } else if (input == "3") {
                 showDetailedSquad();
-            } else if (input == "continue") {
+            } else if (input == "4") {
                 if (currentMatchIndex < seasonFixtures.size()) {
                     currentState = GameState::MATCH_SIMULATION;
                 } else {
@@ -389,9 +389,9 @@ void IPLManager::handleInput() {
             break;
             
         case GameState::MATCH_SIMULATION:
-            if (input == "back") {
+            if (input == "0") {
                 currentState = GameState::SEASON_CALENDAR;
-            } else if (input == "simulate") {
+            } else if (input == "1") {
                 if (currentMatchIndex < seasonFixtures.size()) {
                     simulateMatch(seasonFixtures[currentMatchIndex]);
                     currentMatchIndex++;
@@ -404,23 +404,23 @@ void IPLManager::handleInput() {
             break;
             
         case GameState::LEAGUE_TABLE:
-            if (input == "back") {
+            if (input == "0") {
                 currentState = GameState::SEASON_CALENDAR;
             }
             break;
             
         case GameState::PLAYOFFS:
-            if (input == "back") {
+            if (input == "0") {
                 currentState = GameState::SEASON_CALENDAR;
-            } else if (input == "continue") {
+            } else if (input == "1") {
                 currentState = GameState::CAREER_SUMMARY;
             }
             break;
             
         case GameState::CAREER_SUMMARY:
-            if (input == "back") {
+            if (input == "0") {
                 currentState = GameState::MAIN_MENU;
-            } else if (input == "continue") {
+            } else if (input == "1") {
                 // Start new season
                 managerProfile.careerYear++;
                 currentMatchIndex = 0;
@@ -430,7 +430,7 @@ void IPLManager::handleInput() {
             break;
             
         case GameState::SETTINGS:
-            if (input == "back") {
+            if (input == "0") {
                 currentState = GameState::MAIN_MENU;
             }
             break;
@@ -625,18 +625,18 @@ void IPLManager::showAuction() {
     std::cout << "║  Squad Size: 18-25 players                                  ║\n";
     std::cout << "║  Overseas Players: Max 8 in squad, Max 4 in XI              ║\n";
     std::cout << "║                                                              ║\n";
-    std::cout << "║  🎯 1. Manual Auction (Bid for each player)                 ║\n";
-    std::cout << "║  ⚡ 2. Simulate Auction (Auto-build all teams)              ║\n";
-    std::cout << "║  📊 3. View Available Players                               ║\n";
-    std::cout << "║  👥 4. View Current Squad                                   ║\n";
-    std::cout << "║  ➡️  5. Continue to Season                                  ║\n";
-    std::cout << "║  ⬅️  back. Go Back                                          ║\n";
+    std::cout << "║  1. Manual Auction (Bid for each player)                     ║\n";
+    std::cout << "║  2. Simulate Auction (Auto-build all teams)                  ║\n";
+    std::cout << "║  3. View Available Players                                   ║\n";
+    std::cout << "║  4. View Current Squad                                       ║\n";
+    std::cout << "║  5. Continue to Season                                       ║\n";
+    std::cout << "║  0. Go Back                                                  ║\n";
     std::cout << "║                                                              ║\n";
-    std::cout << "║  🏁 6. Simulate Entire Season (Show only final scores)       ║\n";
+    std::cout << "║  6. Simulate Entire Season (Show only final scores)          ║\n";
     std::cout << "║                                                              ║\n";
     std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
     std::cout << "\n";
-    std::cout << "Enter your choice: ";
+    std::cout << "Enter your choice (0-6): ";
 }
 
 void IPLManager::showSeasonCalendar() {
@@ -650,15 +650,15 @@ void IPLManager::showSeasonCalendar() {
     std::cout << "║  Matches Played: " << std::left << std::setw(41) << currentMatchIndex << "║\n";
     std::cout << "║  Total Matches: " << std::left << std::setw(41) << seasonFixtures.size() << "║\n";
     std::cout << "║                                                              ║\n";
-    std::cout << "║  📊 table. View League Table                                ║\n";
-    std::cout << "║  🏏 match. Simulate Next Match                              ║\n";
-    std::cout << "║  👥 squad. View Detailed Squad                              ║\n";
-    std::cout << "║  ➡️  continue. Continue Season                              ║\n";
-    std::cout << "║  ⬅️  back. Go Back                                          ║\n";
+    std::cout << "║  1. View League Table                                        ║\n";
+    std::cout << "║  2. Simulate Next Match                                      ║\n";
+    std::cout << "║  3. View Detailed Squad                                      ║\n";
+    std::cout << "║  4. Continue Season                                          ║\n";
+    std::cout << "║  0. Go Back                                                  ║\n";
     std::cout << "║                                                              ║\n";
     std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
     std::cout << "\n";
-    std::cout << "Enter your choice: ";
+    std::cout << "Enter your choice (0-4): ";
 }
 
 void IPLManager::showMatchSimulation() {
@@ -696,14 +696,14 @@ void IPLManager::showMatchSimulation() {
         std::cout << "║  All matches completed!                                     ║\n";
         std::cout << "║  Proceeding to playoffs...                                  ║\n";
         std::cout << "║                                                              ║\n";
-        std::cout << "║  ➡️  continue. Continue to Playoffs                         ║\n";
-        std::cout << "║  ⬅️  back. Go Back                                          ║\n";
+        std::cout << "║  1. Continue to Playoffs                                    ║\n";
+        std::cout << "║  0. Go Back                                                 ║\n";
         std::cout << "║                                                              ║\n";
         std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
     }
     
     std::cout << "\n";
-    std::cout << "Enter your choice: ";
+    std::cout << "Enter your choice (0-1): ";
 }
 
 void IPLManager::showLeagueTable() {
@@ -1770,7 +1770,7 @@ void IPLManager::simulateAuction() {
     
     // Mark auction as complete
     auctionComplete = true;
-    std::cout << "\nType 'continue' to proceed to the season." << std::endl;
+    std::cout << "\nType 5 to proceed to the season." << std::endl;
     std::cout << "Enter your choice: ";
 }
 
@@ -1908,10 +1908,10 @@ void IPLManager::manualAuction() {
                     continue;
                 }
                 
-                std::cout << "Do you want to bid ₹" << (currentBid + 0.5f) << " crore? (bid/pass): ";
+                std::cout << "Do you want to bid ₹" << (currentBid + 0.5f) << " crore? (1=bid, 0=pass): ";
                 std::string input;
                 std::getline(std::cin, input);
-                if (input == "bid" && userTeam->budget >= currentBid + 0.5f && userTeam->squad.size() < 25 && (player.nationality == "Indian" || userTeam->overseasCount < 8)) {
+                if (input == "1" && userTeam->budget >= currentBid + 0.5f && userTeam->squad.size() < 25 && (player.nationality == "Indian" || userTeam->overseasCount < 8)) {
                     currentBid += 0.5f;
                     currentBidder = userTeam->team.name;
                     anyBid = true;
