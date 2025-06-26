@@ -2029,9 +2029,60 @@ std::vector<IPLPlayer*> IPLManager::createBattingOrder(AITeam& team) {
 
 // Helper: Auto-simulate matches not involving manager's team
 void IPLManager::autoSimulateOtherMatches() {
-    // Implement auto-simulation logic for matches not involving manager's team
-    // This is a placeholder and should be replaced with actual auto-simulation logic
-    std::cout << "Auto-simulating other matches...\n";
+    std::cout << "\n🏏 Auto-simulating other matches...\n";
+    
+    for (auto& match : seasonFixtures) {
+        if (!match.isPlayed && match.team1 != managerProfile.selectedTeam && match.team2 != managerProfile.selectedTeam) {
+            std::cout << "Simulating: " << match.team1 << " vs " << match.team2 << "... ";
+            
+            // Quick simulation without detailed commentary
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<> scoreDist(120, 200);
+            std::uniform_int_distribution<> wicketDist(5, 10);
+            
+            match.team1Score = scoreDist(gen);
+            match.team2Score = scoreDist(gen);
+            match.isPlayed = true;
+            
+            if (match.team1Score > match.team2Score) {
+                match.winner = match.team1;
+                std::cout << match.team1 << " wins by " << (match.team1Score - match.team2Score) << " runs\n";
+            } else if (match.team2Score > match.team1Score) {
+                match.winner = match.team2;
+                std::cout << match.team2 << " wins by " << (match.team2Score - match.team1Score) << " runs\n";
+            } else {
+                match.winner = "Tie";
+                std::cout << "Match tied!\n";
+            }
+            
+            // Update team stats
+            for (auto& team : iplTeams) {
+                if (team.name == match.team1) {
+                    if (match.winner == match.team1) {
+                        team.wins++;
+                        team.points += 2;
+                    } else if (match.winner == "Tie") {
+                        team.ties++;
+                        team.points += 1;
+                    } else {
+                        team.losses++;
+                    }
+                } else if (team.name == match.team2) {
+                    if (match.winner == match.team2) {
+                        team.wins++;
+                        team.points += 2;
+                    } else if (match.winner == "Tie") {
+                        team.ties++;
+                        team.points += 1;
+                    } else {
+                        team.losses++;
+                    }
+                }
+            }
+        }
+    }
+    std::cout << "Auto-simulation complete!\n\n";
 }
 
 // Helper: Show squad with detailed information
