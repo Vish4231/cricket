@@ -9,6 +9,7 @@ Player::Player(const std::string& name, int age, PlayerRole role)
     , role(role)
     , battingStyle(BattingStyle::RIGHT_HANDED)
     , bowlingStyle(BowlingStyle::MEDIUM)
+    , battingApproach(BattingApproach::BALANCED)
     , form(75)
     , morale(80)
 {
@@ -255,8 +256,75 @@ void Player::UpdateMorale(int moraleChange) {
 }
 
 void Player::CalculateRatings() {
-    // This method is called after attribute changes to recalculate ratings
-    // The actual calculation is done in the getter methods
+    // Set batting style string
+    switch (battingStyle) {
+        case BattingStyle::RIGHT_HANDED:
+            battingStyleString = "Right Handed";
+            break;
+        case BattingStyle::LEFT_HANDED:
+            battingStyleString = "Left Handed";
+            break;
+    }
+    
+    // Set batting approach string
+    switch (battingApproach) {
+        case BattingApproach::AGGRESSIVE:
+            battingApproachString = "Aggressive";
+            break;
+        case BattingApproach::DEFENSIVE:
+            battingApproachString = "Defensive";
+            break;
+        case BattingApproach::BALANCED:
+            battingApproachString = "Balanced";
+            break;
+        case BattingApproach::ATTACKING:
+            battingApproachString = "Attacking";
+            break;
+    }
+    
+    // Set bowling style string
+    switch (bowlingStyle) {
+        case BowlingStyle::FAST:
+            bowlingStyleString = "Fast";
+            break;
+        case BowlingStyle::MEDIUM_FAST:
+            bowlingStyleString = "Medium Fast";
+            break;
+        case BowlingStyle::MEDIUM:
+            bowlingStyleString = "Medium";
+            break;
+        case BowlingStyle::SPIN_OFF_BREAK:
+            bowlingStyleString = "Off Spin";
+            break;
+        case BowlingStyle::SPIN_LEG_BREAK:
+            bowlingStyleString = "Leg Spin";
+            break;
+        case BowlingStyle::SPIN_LEFT_ARM_ORTHODOX:
+            bowlingStyleString = "Left Arm Orthodox";
+            break;
+        case BowlingStyle::SPIN_LEFT_ARM_UNORTHODOX:
+            bowlingStyleString = "Left Arm Unorthodox";
+            break;
+    }
+    
+    // Set role string
+    switch (role) {
+        case PlayerRole::BATSMAN:
+            roleString = "Batsman";
+            break;
+        case PlayerRole::BOWLER:
+            roleString = "Bowler";
+            break;
+        case PlayerRole::ALL_ROUNDER:
+            roleString = "All Rounder";
+            break;
+        case PlayerRole::WICKET_KEEPER:
+            roleString = "Wicket Keeper";
+            break;
+        case PlayerRole::CAPTAIN:
+            roleString = "Captain";
+            break;
+    }
 }
 
 std::string Player::ToJSON() const {

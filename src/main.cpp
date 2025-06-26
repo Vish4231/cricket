@@ -25,6 +25,7 @@ public:
     std::string team;
     std::string role; // Batsman, Bowler, All-rounder, Wicket-keeper
     std::string nationality; // Indian, Overseas
+    std::string battingApproach; // Aggressive, Defensive, Balanced, Attacking
     float battingRating;
     float bowlingRating;
     float fieldingRating;
@@ -187,6 +188,12 @@ private:
     
     // Simulate a Super Over between two teams
     std::string simulateSuperOver(const std::string& team1, const std::string& team2);
+    
+    // Helper: Get available bowlers for a team (max 4 overs per bowler)
+    std::vector<IPLPlayer*> getAvailableBowlers(AITeam& team, std::map<std::string, int>& bowlerOvers);
+    
+    // Helper: Create batting order based on batting approaches
+    std::vector<IPLPlayer*> createBattingOrder(AITeam& team);
 };
 
 // Constructor
@@ -820,6 +827,7 @@ void IPLManager::loadPlayersFromAPI() {
     };
     std::vector<std::string> roles = {"Batsman", "Bowler", "All-rounder", "Wicket-keeper"};
     std::vector<std::string> nationalities = {"Indian", "Overseas"};
+    std::vector<std::string> battingApproaches = {"Aggressive", "Defensive", "Balanced", "Attacking"};
     
     // Clear previous
     availablePlayers.clear();
@@ -838,6 +846,38 @@ void IPLManager::loadPlayersFromAPI() {
             player.fieldingRating = 50 + rand() % 50; // 50-99
             player.price = 4 + (rand() % 25); // 4-28 crore
             player.age = 20 + (rand() % 17); // 20-36
+            
+            // Assign batting approach based on role and batting rating
+            if (player.role == "Batsman") {
+                if (player.battingRating > 85) {
+                    player.battingApproach = "Aggressive";
+                } else if (player.battingRating > 75) {
+                    player.battingApproach = "Attacking";
+                } else if (player.battingRating > 65) {
+                    player.battingApproach = "Balanced";
+                } else {
+                    player.battingApproach = "Defensive";
+                }
+            } else if (player.role == "All-rounder") {
+                if (player.battingRating > 80) {
+                    player.battingApproach = "Attacking";
+                } else if (player.battingRating > 70) {
+                    player.battingApproach = "Balanced";
+                } else {
+                    player.battingApproach = "Defensive";
+                }
+            } else if (player.role == "Wicket-keeper") {
+                if (player.battingRating > 80) {
+                    player.battingApproach = "Aggressive";
+                } else if (player.battingRating > 70) {
+                    player.battingApproach = "Balanced";
+                } else {
+                    player.battingApproach = "Defensive";
+                }
+            } else { // Bowler
+                player.battingApproach = "Defensive";
+            }
+            
             availablePlayers.push_back(player);
             ++indianIdx;
         }
@@ -853,6 +893,38 @@ void IPLManager::loadPlayersFromAPI() {
             player.fieldingRating = 55 + rand() % 45; // 55-99
             player.price = 6 + (rand() % 25); // 6-30 crore
             player.age = 22 + (rand() % 15); // 22-36
+            
+            // Assign batting approach based on role and batting rating
+            if (player.role == "Batsman") {
+                if (player.battingRating > 85) {
+                    player.battingApproach = "Aggressive";
+                } else if (player.battingRating > 75) {
+                    player.battingApproach = "Attacking";
+                } else if (player.battingRating > 65) {
+                    player.battingApproach = "Balanced";
+                } else {
+                    player.battingApproach = "Defensive";
+                }
+            } else if (player.role == "All-rounder") {
+                if (player.battingRating > 80) {
+                    player.battingApproach = "Attacking";
+                } else if (player.battingRating > 70) {
+                    player.battingApproach = "Balanced";
+                } else {
+                    player.battingApproach = "Defensive";
+                }
+            } else if (player.role == "Wicket-keeper") {
+                if (player.battingRating > 80) {
+                    player.battingApproach = "Aggressive";
+                } else if (player.battingRating > 70) {
+                    player.battingApproach = "Balanced";
+                } else {
+                    player.battingApproach = "Defensive";
+                }
+            } else { // Bowler
+                player.battingApproach = "Defensive";
+            }
+            
             availablePlayers.push_back(player);
             ++overseasIdx;
         }
@@ -893,35 +965,134 @@ void IPLManager::generateSeasonFixtures() {
 }
 
 void IPLManager::simulateMatch(Match& match) {
-    // Over-by-over simulation with commentary
+    // Over-by-over simulation with bowler selection for manager
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> runsDist(0, 6); // 0-6 runs per ball
     std::uniform_int_distribution<> wicketDist(0, 19); // 0 = wicket (5% chance)
-    std::uniform_int_distribution<> boundaryDist(0, 3); // 0 = boundary (25% chance)
     int overs = 20;
     int ballsPerOver = 6;
     int team1Score = 0, team2Score = 0;
     int team1Wickets = 0, team2Wickets = 0;
     std::vector<std::string> commentary;
     
+    // Find AITeam objects
+    AITeam* team1AI = nullptr;
+    AITeam* team2AI = nullptr;
+    for (auto& ai : aiTeams) {
+        if (ai.team.name == match.team1) team1AI = &ai;
+        if (ai.team.name == match.team2) team2AI = &ai;
+    }
+    
+    // Create batting orders based on batting approaches
+    std::vector<IPLPlayer*> team1BattingOrder;
+    std::vector<IPLPlayer*> team2BattingOrder;
+    if (team1AI) team1BattingOrder = createBattingOrder(*team1AI);
+    if (team2AI) team2BattingOrder = createBattingOrder(*team2AI);
+    
+    // Track overs per bowler
+    std::map<std::string, int> team1BowlerOvers, team2BowlerOvers;
+    
     // Team 1 batting
     std::cout << "\n" << match.team1 << " Innings:\n";
+    int team1BatterIndex = 0;
     for (int over = 1; over <= overs && team1Wickets < 10; ++over) {
+        IPLPlayer* bowler = nullptr;
+        // Bowler selection: if manager is bowling
+        if (match.team2 == managerProfile.selectedTeam && team2AI) {
+            auto bowlers = getAvailableBowlers(*team2AI, team2BowlerOvers);
+            std::cout << "Select bowler for Over " << over << ":\n";
+            for (size_t i = 0; i < bowlers.size(); ++i) {
+                std::cout << (i+1) << ". " << bowlers[i]->name << " (Overs: " << team2BowlerOvers[bowlers[i]->name] << ", Skill: " << bowlers[i]->bowlingRating << ")\n";
+            }
+            int choice = 1;
+            std::cout << "Enter bowler number: ";
+            std::cin >> choice;
+            std::cin.ignore();
+            if (choice < 1 || choice > (int)bowlers.size()) choice = 1;
+            bowler = bowlers[choice-1];
+            team2BowlerOvers[bowler->name]++;
+        } else if (team2AI) {
+            // AI selects bowler
+            auto bowlers = getAvailableBowlers(*team2AI, team2BowlerOvers);
+            if (!bowlers.empty()) {
+                bowler = bowlers[over % bowlers.size()];
+                team2BowlerOvers[bowler->name]++;
+            }
+        }
+        
         int overRuns = 0, overWickets = 0;
         for (int ball = 1; ball <= ballsPerOver && team1Wickets < 10; ++ball) {
+            // Get current batter
+            IPLPlayer* currentBatter = nullptr;
+            if (team1BatterIndex < team1BattingOrder.size()) {
+                currentBatter = team1BattingOrder[team1BatterIndex];
+            }
+            
             int runs = runsDist(gen);
             bool wicket = (wicketDist(gen) == 0);
+            
+            // Adjust runs based on batting approach
+            if (currentBatter) {
+                if (currentBatter->battingApproach == "Aggressive") {
+                    // Aggressive batters are more likely to hit boundaries but also get out
+                    if (runs < 4) runs = std::max(0, runs - 1);
+                    if (runs >= 4) runs = std::min(6, runs + 1);
+                    if (wicketDist(gen) < 3) wicket = true; // Higher chance of getting out
+                } else if (currentBatter->battingApproach == "Attacking") {
+                    // Attacking batters are good at rotating strike and hitting boundaries
+                    if (runs == 0) runs = 1; // Less likely to get dot balls
+                    if (runs >= 4) runs = std::min(6, runs + 1);
+                } else if (currentBatter->battingApproach == "Balanced") {
+                    // Balanced batters are consistent
+                    // No special adjustments
+                } else if (currentBatter->battingApproach == "Defensive") {
+                    // Defensive batters are less likely to get out but score fewer runs
+                    if (runs > 4) runs = std::max(1, runs - 2);
+                    if (wicketDist(gen) > 15) wicket = false; // Lower chance of getting out
+                }
+                
+                // Adjust based on batting rating
+                if (currentBatter->battingRating > 80 && runs > 0) runs += 1;
+                if (currentBatter->battingRating < 60 && runs > 2) runs -= 1;
+            }
+            
+            // Bowler skill: reduce runs, increase wicket chance
+            if (bowler) {
+                if (bowler->bowlingRating > 80 && runs > 0) runs -= 1;
+                if (bowler->bowlingRating > 90 && runs > 0) runs -= 1;
+                if (bowler->bowlingRating > 80 && wicketDist(gen) < 2) wicket = true;
+            }
+            
+            if (runs < 0) runs = 0;
             overRuns += runs;
             team1Score += runs;
+            
             std::string event = "";
             if (wicket) {
                 team1Wickets++;
                 overWickets++;
-                event = "WICKET! ";
+                team1BatterIndex++; // Next batter
+                if (currentBatter) {
+                    event = "WICKET! " + currentBatter->name + " out! ";
+                } else {
+                    event = "WICKET! ";
+                }
             }
-            if (runs == 4) event += "FOUR! ";
-            if (runs == 6) event += "SIX! ";
+            if (runs == 4) {
+                if (currentBatter) {
+                    event += "FOUR! " + currentBatter->name + " hits a boundary! ";
+                } else {
+                    event += "FOUR! ";
+                }
+            }
+            if (runs == 6) {
+                if (currentBatter) {
+                    event += "SIX! " + currentBatter->name + " hits a maximum! ";
+                } else {
+                    event += "SIX! ";
+                }
+            }
             if (!event.empty()) {
                 commentary.push_back("Over " + std::to_string(over) + "." + std::to_string(ball) + ": " + event);
             }
@@ -932,21 +1103,104 @@ void IPLManager::simulateMatch(Match& match) {
     
     // Team 2 batting
     std::cout << "\n" << match.team2 << " Innings:\n";
+    int team2BatterIndex = 0;
     for (int over = 1; over <= overs && team2Wickets < 10 && team2Score <= team1Score; ++over) {
+        IPLPlayer* bowler = nullptr;
+        // Bowler selection: if manager is bowling
+        if (match.team1 == managerProfile.selectedTeam && team1AI) {
+            auto bowlers = getAvailableBowlers(*team1AI, team1BowlerOvers);
+            std::cout << "Select bowler for Over " << over << ":\n";
+            for (size_t i = 0; i < bowlers.size(); ++i) {
+                std::cout << (i+1) << ". " << bowlers[i]->name << " (Overs: " << team1BowlerOvers[bowlers[i]->name] << ", Skill: " << bowlers[i]->bowlingRating << ")\n";
+            }
+            int choice = 1;
+            std::cout << "Enter bowler number: ";
+            std::cin >> choice;
+            std::cin.ignore();
+            if (choice < 1 || choice > (int)bowlers.size()) choice = 1;
+            bowler = bowlers[choice-1];
+            team1BowlerOvers[bowler->name]++;
+        } else if (team1AI) {
+            // AI selects bowler
+            auto bowlers = getAvailableBowlers(*team1AI, team1BowlerOvers);
+            if (!bowlers.empty()) {
+                bowler = bowlers[over % bowlers.size()];
+                team1BowlerOvers[bowler->name]++;
+            }
+        }
+        
         int overRuns = 0, overWickets = 0;
         for (int ball = 1; ball <= ballsPerOver && team2Wickets < 10 && team2Score <= team1Score; ++ball) {
+            // Get current batter
+            IPLPlayer* currentBatter = nullptr;
+            if (team2BatterIndex < team2BattingOrder.size()) {
+                currentBatter = team2BattingOrder[team2BatterIndex];
+            }
+            
             int runs = runsDist(gen);
             bool wicket = (wicketDist(gen) == 0);
+            
+            // Adjust runs based on batting approach
+            if (currentBatter) {
+                if (currentBatter->battingApproach == "Aggressive") {
+                    // Aggressive batters are more likely to hit boundaries but also get out
+                    if (runs < 4) runs = std::max(0, runs - 1);
+                    if (runs >= 4) runs = std::min(6, runs + 1);
+                    if (wicketDist(gen) < 3) wicket = true; // Higher chance of getting out
+                } else if (currentBatter->battingApproach == "Attacking") {
+                    // Attacking batters are good at rotating strike and hitting boundaries
+                    if (runs == 0) runs = 1; // Less likely to get dot balls
+                    if (runs >= 4) runs = std::min(6, runs + 1);
+                } else if (currentBatter->battingApproach == "Balanced") {
+                    // Balanced batters are consistent
+                    // No special adjustments
+                } else if (currentBatter->battingApproach == "Defensive") {
+                    // Defensive batters are less likely to get out but score fewer runs
+                    if (runs > 4) runs = std::max(1, runs - 2);
+                    if (wicketDist(gen) > 15) wicket = false; // Lower chance of getting out
+                }
+                
+                // Adjust based on batting rating
+                if (currentBatter->battingRating > 80 && runs > 0) runs += 1;
+                if (currentBatter->battingRating < 60 && runs > 2) runs -= 1;
+            }
+            
+            // Bowler skill: reduce runs, increase wicket chance
+            if (bowler) {
+                if (bowler->bowlingRating > 80 && runs > 0) runs -= 1;
+                if (bowler->bowlingRating > 90 && runs > 0) runs -= 1;
+                if (bowler->bowlingRating > 80 && wicketDist(gen) < 2) wicket = true;
+            }
+            
+            if (runs < 0) runs = 0;
             overRuns += runs;
             team2Score += runs;
+            
             std::string event = "";
             if (wicket) {
                 team2Wickets++;
                 overWickets++;
-                event = "WICKET! ";
+                team2BatterIndex++; // Next batter
+                if (currentBatter) {
+                    event = "WICKET! " + currentBatter->name + " out! ";
+                } else {
+                    event = "WICKET! ";
+                }
             }
-            if (runs == 4) event += "FOUR! ";
-            if (runs == 6) event += "SIX! ";
+            if (runs == 4) {
+                if (currentBatter) {
+                    event += "FOUR! " + currentBatter->name + " hits a boundary! ";
+                } else {
+                    event += "FOUR! ";
+                }
+            }
+            if (runs == 6) {
+                if (currentBatter) {
+                    event += "SIX! " + currentBatter->name + " hits a maximum! ";
+                } else {
+                    event += "SIX! ";
+                }
+            }
             if (!event.empty()) {
                 commentary.push_back("Over " + std::to_string(over) + "." + std::to_string(ball) + ": " + event);
             }
@@ -1559,6 +1813,43 @@ void IPLManager::simulateEntireSeason() {
     std::cout << "\nPress Enter to return to main menu...";
     std::cin.get();
     currentState = GameState::MAIN_MENU;
+}
+
+// Helper: Get available bowlers for a team (max 4 overs per bowler)
+std::vector<IPLPlayer*> IPLManager::getAvailableBowlers(AITeam& team, std::map<std::string, int>& bowlerOvers) {
+    std::vector<IPLPlayer*> bowlers;
+    for (auto& player : team.squad) {
+        if ((player.role == "Bowler" || player.role == "All-rounder") && bowlerOvers[player.name] < 4) {
+            bowlers.push_back(&player);
+        }
+    }
+    return bowlers;
+}
+
+// Helper: Create batting order based on batting approaches
+std::vector<IPLPlayer*> IPLManager::createBattingOrder(AITeam& team) {
+    std::vector<IPLPlayer*> battingOrder;
+    for (auto& player : team.squad) {
+        if (player.battingApproach == "Aggressive") {
+            battingOrder.push_back(&player);
+        }
+    }
+    for (auto& player : team.squad) {
+        if (player.battingApproach == "Balanced") {
+            battingOrder.push_back(&player);
+        }
+    }
+    for (auto& player : team.squad) {
+        if (player.battingApproach == "Defensive") {
+            battingOrder.push_back(&player);
+        }
+    }
+    for (auto& player : team.squad) {
+        if (player.battingApproach == "Attacking") {
+            battingOrder.push_back(&player);
+        }
+    }
+    return battingOrder;
 }
 
 int main(int argc, char* argv[]) {

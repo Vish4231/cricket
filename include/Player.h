@@ -18,6 +18,13 @@ enum class BattingStyle {
     LEFT_HANDED
 };
 
+enum class BattingApproach {
+    AGGRESSIVE,
+    DEFENSIVE,
+    BALANCED,
+    ATTACKING
+};
+
 enum class BowlingStyle {
     FAST,
     MEDIUM_FAST,
@@ -133,6 +140,8 @@ public:
     const std::string& GetRole() const { return roleString; }
     const std::string& GetBattingStyle() const { return battingStyleString; }
     const std::string& GetBowlingStyle() const { return bowlingStyleString; }
+    BattingApproach GetBattingApproach() const { return battingApproach; }
+    const std::string& GetBattingApproachString() const { return battingApproachString; }
     const std::string& GetTeam() const { return team; }
     const std::string& GetPhoto() const { return photo; }
     float GetBattingSkill() const { return battingSkill; }
@@ -205,6 +214,8 @@ private:
     std::string battingStyleString;
     BowlingStyle bowlingStyle;
     std::string bowlingStyleString;
+    BattingApproach battingApproach;
+    std::string battingApproachString;
     std::string team;
     std::string photo;
     
