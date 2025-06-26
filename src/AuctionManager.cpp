@@ -1,6 +1,4 @@
 #include "AuctionManager.h"
-#include <glad/glad.h>
-#include "AuctionVisualizer.h"
 #include <iostream>
 #include <algorithm>
 #include <random>
@@ -58,10 +56,6 @@ void AuctionManager::cleanup() {
     currentSession.teamBudgets.clear();
     teamBudgets.clear();
     currentBidHistory.clear();
-}
-
-void AuctionManager::setVisualizer(std::shared_ptr<AuctionVisualizer> visualizer) {
-    this->visualizer = visualizer;
 }
 
 void AuctionManager::createAuctionSession(const std::string& name, AuctionType type) {
@@ -231,11 +225,6 @@ void AuctionManager::placeBid(const std::string& teamName, float amount) {
     remainingTimeSeconds = biddingTimeSeconds;
     lotStartTime = std::chrono::steady_clock::now();
     
-    // Update visualizer
-    if (visualizer) {
-        visualizer->onBidPlaced(teamName, amount);
-    }
-    
     // Trigger callback
     if (bidPlacedCallback) {
         bidPlacedCallback(teamName, amount);
@@ -322,7 +311,7 @@ void AuctionManager::setAIStrategy(const std::string& teamName, BiddingStrategy 
 }
 
 void AuctionManager::setAIAggression(const std::string& teamName, float aggression) {
-    aiAggression[teamName] = glm::clamp(aggression, 0.0f, 1.0f);
+    aiAggression[teamName] = std::max(0.0f, std::min(1.0f, aggression));
 }
 
 void AuctionManager::simulateAIBidding() {
@@ -622,9 +611,7 @@ void AuctionManager::logBid(const std::string& teamName, float amount, const std
 }
 
 void AuctionManager::updateVisualizer() {
-    if (visualizer) {
-        // Update visualizer with current auction state
-    }
+    // Update visualizer with current auction state
 }
 
 void AuctionManager::triggerCallbacks() {
@@ -655,11 +642,6 @@ void AuctionManager::onBidWon(const std::string& teamName, float finalBid) {
     
     // Update team budget
     updateTeamBudget(teamName, finalBid);
-    
-    // Update visualizer
-    if (visualizer) {
-        visualizer->onBidWon(teamName, finalBid);
-    }
     
     // Trigger callbacks
     if (lotSoldCallback) {

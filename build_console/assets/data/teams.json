@@ -1,0 +1,139 @@
+{
+  "teams": [
+    {
+      "name": "Mumbai Indians",
+      "shortName": "MI",
+      "city": "Mumbai",
+      "homeVenue": "Wankhede Stadium",
+      "owner": "Reliance Industries",
+      "captain": "Rohit Sharma",
+      "coach": "Mark Boucher",
+      "budget": 95000000,
+      "spent": 85000000,
+      "remaining": 10000000,
+      "players": [
+        "Rohit Sharma",
+        "Jasprit Bumrah",
+        "Suryakumar Yadav",
+        "Ishan Kishan",
+        "Tilak Varma",
+        "Tim David",
+        "Cameron Green",
+        "Piyush Chawla",
+        "Jason Behrendorff",
+        "Kumar Kartikeya"
+      ],
+      "achievements": [
+        "IPL Champions 2013",
+        "IPL Champions 2015",
+        "IPL Champions 2017",
+        "IPL Champions 2019",
+        "IPL Champions 2020"
+      ],
+      "teamColors": {
+        "primary": "#004BA0",
+        "secondary": "#D71920"
+      }
+    },
+    {
+      "name": "Royal Challengers Bangalore",
+      "shortName": "RCB",
+      "city": "Bangalore",
+      "homeVenue": "M. Chinnaswamy Stadium",
+      "owner": "United Spirits",
+      "captain": "Faf du Plessis",
+      "coach": "Andy Flower",
+      "budget": 95000000,
+      "spent": 90000000,
+      "remaining": 5000000,
+      "players": [
+        "Virat Kohli",
+        "Faf du Plessis",
+        "Glenn Maxwell",
+        "Dinesh Karthik",
+        "Mohammed Siraj",
+        "Wanindu Hasaranga",
+        "Josh Hazlewood",
+        "Harshal Patel",
+        "Shahbaz Ahmed",
+        "Anuj Rawat"
+      ],
+      "achievements": [
+        "IPL Runners-up 2009",
+        "IPL Runners-up 2011",
+        "IPL Runners-up 2016"
+      ],
+      "teamColors": {
+        "primary": "#D1171E",
+        "secondary": "#000000"
+      }
+    },
+    {
+      "name": "Chennai Super Kings",
+      "shortName": "CSK",
+      "city": "Chennai",
+      "homeVenue": "M. A. Chidambaram Stadium",
+      "owner": "India Cements",
+      "captain": "MS Dhoni",
+      "coach": "Stephen Fleming",
+      "budget": 95000000,
+      "spent": 88000000,
+      "remaining": 7000000,
+      "players": [
+        "MS Dhoni",
+        "Ruturaj Gaikwad",
+        "Devon Conway",
+        "Ben Stokes",
+        "Ravindra Jadeja",
+        "Moeen Ali",
+        "Deepak Chahar",
+        "Mitchell Santner",
+        "Tushar Deshpande",
+        "Ajinkya Rahane"
+      ],
+      "achievements": [
+        "IPL Champions 2010",
+        "IPL Champions 2011",
+        "IPL Champions 2018",
+        "IPL Champions 2021",
+        "IPL Champions 2023"
+      ],
+      "teamColors": {
+        "primary": "#FFFF00",
+        "secondary": "#000080"
+      }
+    },
+    {
+      "name": "Kolkata Knight Riders",
+      "shortName": "KKR",
+      "city": "Kolkata",
+      "homeVenue": "Eden Gardens",
+      "owner": "Knight Riders Sports",
+      "captain": "Shreyas Iyer",
+      "coach": "Chandrakant Pandit",
+      "budget": 95000000,
+      "spent": 87000000,
+      "remaining": 8000000,
+      "players": [
+        "Shreyas Iyer",
+        "Andre Russell",
+        "Sunil Narine",
+        "Venkatesh Iyer",
+        "Nitish Rana",
+        "Rinku Singh",
+        "Varun Chakravarthy",
+        "Umesh Yadav",
+        "Tim Southee",
+        "Rahmanullah Gurbaz"
+      ],
+      "achievements": [
+        "IPL Champions 2012",
+        "IPL Champions 2014"
+      ],
+      "teamColors": {
+        "primary": "#2E0854",
+        "secondary": "#B8860B"
+      }
+    }
+  ]
+} 

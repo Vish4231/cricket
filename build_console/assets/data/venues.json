@@ -1,0 +1,394 @@
+{
+  "venues": [
+    {
+      "id": 1,
+      "name": "Wankhede Stadium",
+      "city": "Mumbai",
+      "country": "India",
+      "capacity": 33108,
+      "established": 1974,
+      "pitch_conditions": {
+        "type": "Batting friendly",
+        "speed": 65,
+        "spin": 45,
+        "bounce": 70,
+        "swing": 40,
+        "seam": 35
+      },
+      "weather": {
+        "temperature": 28,
+        "humidity": 75,
+        "wind_speed": 12,
+        "precipitation_chance": 15
+      },
+      "dimensions": {
+        "boundary_short": 65,
+        "boundary_long": 75,
+        "boundary_square": 70
+      },
+      "facilities": {
+        "floodlights": true,
+        "covered_stands": true,
+        "media_center": true,
+        "practice_nets": true
+      },
+      "matches_played": 45,
+      "average_score": 165,
+      "toss_win_rate": {
+        "bat_first": 52,
+        "field_first": 48
+      }
+    },
+    {
+      "id": 2,
+      "name": "MCG",
+      "city": "Melbourne",
+      "country": "Australia",
+      "capacity": 100024,
+      "established": 1853,
+      "pitch_conditions": {
+        "type": "Balanced",
+        "speed": 60,
+        "spin": 50,
+        "bounce": 75,
+        "swing": 45,
+        "seam": 40
+      },
+      "weather": {
+        "temperature": 22,
+        "humidity": 60,
+        "wind_speed": 18,
+        "precipitation_chance": 25
+      },
+      "dimensions": {
+        "boundary_short": 70,
+        "boundary_long": 80,
+        "boundary_square": 75
+      },
+      "facilities": {
+        "floodlights": true,
+        "covered_stands": true,
+        "media_center": true,
+        "practice_nets": true
+      },
+      "matches_played": 38,
+      "average_score": 155,
+      "toss_win_rate": {
+        "bat_first": 48,
+        "field_first": 52
+      }
+    },
+    {
+      "id": 3,
+      "name": "Lord's",
+      "city": "London",
+      "country": "England",
+      "capacity": 30000,
+      "established": 1814,
+      "pitch_conditions": {
+        "type": "Bowling friendly",
+        "speed": 55,
+        "spin": 60,
+        "bounce": 65,
+        "swing": 70,
+        "seam": 65
+      },
+      "weather": {
+        "temperature": 18,
+        "humidity": 70,
+        "wind_speed": 15,
+        "precipitation_chance": 40
+      },
+      "dimensions": {
+        "boundary_short": 60,
+        "boundary_long": 70,
+        "boundary_square": 65
+      },
+      "facilities": {
+        "floodlights": true,
+        "covered_stands": true,
+        "media_center": true,
+        "practice_nets": true
+      },
+      "matches_played": 42,
+      "average_score": 145,
+      "toss_win_rate": {
+        "bat_first": 45,
+        "field_first": 55
+      }
+    },
+    {
+      "id": 4,
+      "name": "Eden Park",
+      "city": "Auckland",
+      "country": "New Zealand",
+      "capacity": 50000,
+      "established": 1900,
+      "pitch_conditions": {
+        "type": "Batting friendly",
+        "speed": 50,
+        "spin": 40,
+        "bounce": 60,
+        "swing": 35,
+        "seam": 30
+      },
+      "weather": {
+        "temperature": 20,
+        "humidity": 65,
+        "wind_speed": 20,
+        "precipitation_chance": 30
+      },
+      "dimensions": {
+        "boundary_short": 55,
+        "boundary_long": 65,
+        "boundary_square": 60
+      },
+      "facilities": {
+        "floodlights": true,
+        "covered_stands": true,
+        "media_center": true,
+        "practice_nets": true
+      },
+      "matches_played": 35,
+      "average_score": 170,
+      "toss_win_rate": {
+        "bat_first": 55,
+        "field_first": 45
+      }
+    },
+    {
+      "id": 5,
+      "name": "Gaddafi Stadium",
+      "city": "Lahore",
+      "country": "Pakistan",
+      "capacity": 27000,
+      "established": 1959,
+      "pitch_conditions": {
+        "type": "Spin friendly",
+        "speed": 45,
+        "spin": 75,
+        "bounce": 55,
+        "swing": 30,
+        "seam": 25
+      },
+      "weather": {
+        "temperature": 32,
+        "humidity": 55,
+        "wind_speed": 10,
+        "precipitation_chance": 10
+      },
+      "dimensions": {
+        "boundary_short": 60,
+        "boundary_long": 70,
+        "boundary_square": 65
+      },
+      "facilities": {
+        "floodlights": true,
+        "covered_stands": true,
+        "media_center": true,
+        "practice_nets": true
+      },
+      "matches_played": 28,
+      "average_score": 150,
+      "toss_win_rate": {
+        "bat_first": 50,
+        "field_first": 50
+      }
+    },
+    {
+      "id": 6,
+      "name": "M. A. Chidambaram Stadium",
+      "city": "Chennai",
+      "country": "India",
+      "capacity": 50000,
+      "established": 1916,
+      "pitch_conditions": {
+        "type": "Spin friendly",
+        "speed": 40,
+        "spin": 80,
+        "bounce": 50,
+        "swing": 25,
+        "seam": 20
+      },
+      "weather": {
+        "temperature": 30,
+        "humidity": 80,
+        "wind_speed": 8,
+        "precipitation_chance": 20
+      },
+      "dimensions": {
+        "boundary_short": 65,
+        "boundary_long": 75,
+        "boundary_square": 70
+      },
+      "facilities": {
+        "floodlights": true,
+        "covered_stands": true,
+        "media_center": true,
+        "practice_nets": true
+      },
+      "matches_played": 40,
+      "average_score": 145,
+      "toss_win_rate": {
+        "bat_first": 45,
+        "field_first": 55
+      }
+    },
+    {
+      "id": 7,
+      "name": "M. Chinnaswamy Stadium",
+      "city": "Bangalore",
+      "country": "India",
+      "capacity": 40000,
+      "established": 1969,
+      "pitch_conditions": {
+        "type": "Batting friendly",
+        "speed": 55,
+        "spin": 50,
+        "bounce": 65,
+        "swing": 35,
+        "seam": 30
+      },
+      "weather": {
+        "temperature": 26,
+        "humidity": 70,
+        "wind_speed": 12,
+        "precipitation_chance": 25
+      },
+      "dimensions": {
+        "boundary_short": 60,
+        "boundary_long": 70,
+        "boundary_square": 65
+      },
+      "facilities": {
+        "floodlights": true,
+        "covered_stands": true,
+        "media_center": true,
+        "practice_nets": true
+      },
+      "matches_played": 38,
+      "average_score": 175,
+      "toss_win_rate": {
+        "bat_first": 60,
+        "field_first": 40
+      }
+    },
+    {
+      "id": 8,
+      "name": "Arun Jaitley Stadium",
+      "city": "Delhi",
+      "country": "India",
+      "capacity": 55000,
+      "established": 1883,
+      "pitch_conditions": {
+        "type": "Balanced",
+        "speed": 50,
+        "spin": 60,
+        "bounce": 60,
+        "swing": 40,
+        "seam": 35
+      },
+      "weather": {
+        "temperature": 28,
+        "humidity": 65,
+        "wind_speed": 15,
+        "precipitation_chance": 15
+      },
+      "dimensions": {
+        "boundary_short": 65,
+        "boundary_long": 75,
+        "boundary_square": 70
+      },
+      "facilities": {
+        "floodlights": true,
+        "covered_stands": true,
+        "media_center": true,
+        "practice_nets": true
+      },
+      "matches_played": 32,
+      "average_score": 160,
+      "toss_win_rate": {
+        "bat_first": 50,
+        "field_first": 50
+      }
+    },
+    {
+      "id": 9,
+      "name": "Eden Gardens",
+      "city": "Kolkata",
+      "country": "India",
+      "capacity": 68000,
+      "established": 1864,
+      "pitch_conditions": {
+        "type": "Spin friendly",
+        "speed": 45,
+        "spin": 70,
+        "bounce": 55,
+        "swing": 30,
+        "seam": 25
+      },
+      "weather": {
+        "temperature": 29,
+        "humidity": 75,
+        "wind_speed": 10,
+        "precipitation_chance": 20
+      },
+      "dimensions": {
+        "boundary_short": 70,
+        "boundary_long": 80,
+        "boundary_square": 75
+      },
+      "facilities": {
+        "floodlights": true,
+        "covered_stands": true,
+        "media_center": true,
+        "practice_nets": true
+      },
+      "matches_played": 35,
+      "average_score": 150,
+      "toss_win_rate": {
+        "bat_first": 48,
+        "field_first": 52
+      }
+    },
+    {
+      "id": 10,
+      "name": "Rajiv Gandhi International Stadium",
+      "city": "Hyderabad",
+      "country": "India",
+      "capacity": 55000,
+      "established": 2003,
+      "pitch_conditions": {
+        "type": "Batting friendly",
+        "speed": 60,
+        "spin": 45,
+        "bounce": 70,
+        "swing": 35,
+        "seam": 30
+      },
+      "weather": {
+        "temperature": 31,
+        "humidity": 70,
+        "wind_speed": 12,
+        "precipitation_chance": 15
+      },
+      "dimensions": {
+        "boundary_short": 65,
+        "boundary_long": 75,
+        "boundary_square": 70
+      },
+      "facilities": {
+        "floodlights": true,
+        "covered_stands": true,
+        "media_center": true,
+        "practice_nets": true
+      },
+      "matches_played": 30,
+      "average_score": 165,
+      "toss_win_rate": {
+        "bat_first": 55,
+        "field_first": 45
+      }
+    }
+  ]
+} 

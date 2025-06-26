@@ -1,0 +1,424 @@
+{
+  "players": [
+    {
+      "id": 1,
+      "name": "Virat Kohli",
+      "age": 35,
+      "nationality": "India",
+      "role": "Batsman",
+      "batting_style": "Right-handed",
+      "bowling_style": "Right-arm medium",
+      "specialization": "Top-order batsman",
+      "batting_stats": {
+        "matches": 292,
+        "runs": 13848,
+        "average": 58.96,
+        "strike_rate": 93.17,
+        "fifties": 50,
+        "hundreds": 50,
+        "highest_score": 183
+      },
+      "bowling_stats": {
+        "wickets": 4,
+        "economy": 6.76,
+        "best_bowling": "1/15"
+      },
+      "fielding_stats": {
+        "catches": 151,
+        "stumpings": 0,
+        "run_outs": 23
+      },
+      "attributes": {
+        "batting": 95,
+        "bowling": 25,
+        "fielding": 85,
+        "fitness": 90,
+        "leadership": 88,
+        "experience": 95
+      },
+      "form": 85,
+      "morale": 90,
+      "salary": 2500000,
+      "contract_expiry": "2025-12-31",
+      "team_id": 1
+    },
+    {
+      "id": 2,
+      "name": "Rohit Sharma",
+      "age": 36,
+      "nationality": "India",
+      "role": "Batsman",
+      "batting_style": "Right-handed",
+      "bowling_style": "Right-arm off-break",
+      "specialization": "Opening batsman",
+      "batting_stats": {
+        "matches": 262,
+        "runs": 10709,
+        "average": 48.96,
+        "strike_rate": 89.97,
+        "fifties": 55,
+        "hundreds": 31,
+        "highest_score": 264
+      },
+      "bowling_stats": {
+        "wickets": 8,
+        "economy": 5.17,
+        "best_bowling": "2/27"
+      },
+      "fielding_stats": {
+        "catches": 93,
+        "stumpings": 0,
+        "run_outs": 15
+      },
+      "attributes": {
+        "batting": 92,
+        "bowling": 30,
+        "fielding": 80,
+        "fitness": 85,
+        "leadership": 90,
+        "experience": 92
+      },
+      "form": 80,
+      "morale": 85,
+      "salary": 2200000,
+      "contract_expiry": "2025-12-31",
+      "team_id": 1
+    },
+    {
+      "id": 3,
+      "name": "Jasprit Bumrah",
+      "age": 30,
+      "nationality": "India",
+      "role": "Bowler",
+      "batting_style": "Right-handed",
+      "bowling_style": "Right-arm fast",
+      "specialization": "Fast bowler",
+      "batting_stats": {
+        "matches": 89,
+        "runs": 145,
+        "average": 6.90,
+        "strike_rate": 78.38,
+        "fifties": 0,
+        "hundreds": 0,
+        "highest_score": 16
+      },
+      "bowling_stats": {
+        "wickets": 149,
+        "economy": 4.63,
+        "best_bowling": "6/19"
+      },
+      "fielding_stats": {
+        "catches": 12,
+        "stumpings": 0,
+        "run_outs": 3
+      },
+      "attributes": {
+        "batting": 20,
+        "bowling": 95,
+        "fielding": 70,
+        "fitness": 88,
+        "leadership": 75,
+        "experience": 85
+      },
+      "form": 90,
+      "morale": 88,
+      "salary": 1800000,
+      "contract_expiry": "2025-12-31",
+      "team_id": 1
+    },
+    {
+      "id": 4,
+      "name": "Steve Smith",
+      "age": 34,
+      "nationality": "Australia",
+      "role": "Batsman",
+      "batting_style": "Right-handed",
+      "bowling_style": "Right-arm leg-break",
+      "specialization": "Middle-order batsman",
+      "batting_stats": {
+        "matches": 155,
+        "runs": 5320,
+        "average": 43.91,
+        "strike_rate": 87.58,
+        "fifties": 37,
+        "hundreds": 12,
+        "highest_score": 164
+      },
+      "bowling_stats": {
+        "wickets": 28,
+        "economy": 5.42,
+        "best_bowling": "3/16"
+      },
+      "fielding_stats": {
+        "catches": 84,
+        "stumpings": 0,
+        "run_outs": 12
+      },
+      "attributes": {
+        "batting": 90,
+        "bowling": 45,
+        "fielding": 75,
+        "fitness": 82,
+        "leadership": 85,
+        "experience": 90
+      },
+      "form": 75,
+      "morale": 80,
+      "salary": 2000000,
+      "contract_expiry": "2025-12-31",
+      "team_id": 2
+    },
+    {
+      "id": 5,
+      "name": "Pat Cummins",
+      "age": 30,
+      "nationality": "Australia",
+      "role": "Bowler",
+      "batting_style": "Right-handed",
+      "bowling_style": "Right-arm fast",
+      "specialization": "Fast bowler",
+      "batting_stats": {
+        "matches": 88,
+        "runs": 379,
+        "average": 16.47,
+        "strike_rate": 95.71,
+        "fifties": 0,
+        "hundreds": 0,
+        "highest_score": 47
+      },
+      "bowling_stats": {
+        "wickets": 141,
+        "economy": 5.47,
+        "best_bowling": "5/24"
+      },
+      "fielding_stats": {
+        "catches": 25,
+        "stumpings": 0,
+        "run_outs": 8
+      },
+      "attributes": {
+        "batting": 35,
+        "bowling": 92,
+        "fielding": 80,
+        "fitness": 90,
+        "leadership": 95,
+        "experience": 85
+      },
+      "form": 88,
+      "morale": 92,
+      "salary": 2100000,
+      "contract_expiry": "2025-12-31",
+      "team_id": 2
+    },
+    {
+      "id": 6,
+      "name": "Jos Buttler",
+      "age": 33,
+      "nationality": "England",
+      "role": "Wicket-keeper",
+      "batting_style": "Right-handed",
+      "bowling_style": "N/A",
+      "specialization": "Wicket-keeper batsman",
+      "batting_stats": {
+        "matches": 178,
+        "runs": 5162,
+        "average": 35.35,
+        "strike_rate": 119.87,
+        "fifties": 26,
+        "hundreds": 5,
+        "highest_score": 162
+      },
+      "bowling_stats": {
+        "wickets": 0,
+        "economy": 0.0,
+        "best_bowling": "N/A"
+      },
+      "fielding_stats": {
+        "catches": 138,
+        "stumpings": 48,
+        "run_outs": 15
+      },
+      "attributes": {
+        "batting": 88,
+        "bowling": 0,
+        "fielding": 95,
+        "fitness": 85,
+        "leadership": 80,
+        "experience": 85
+      },
+      "form": 82,
+      "morale": 85,
+      "salary": 1900000,
+      "contract_expiry": "2025-12-31",
+      "team_id": 3
+    },
+    {
+      "id": 7,
+      "name": "Ben Stokes",
+      "age": 32,
+      "nationality": "England",
+      "role": "All-rounder",
+      "batting_style": "Left-handed",
+      "bowling_style": "Right-arm fast-medium",
+      "specialization": "All-rounder",
+      "batting_stats": {
+        "matches": 114,
+        "runs": 3463,
+        "average": 39.35,
+        "strike_rate": 95.26,
+        "fifties": 22,
+        "hundreds": 4,
+        "highest_score": 182
+      },
+      "bowling_stats": {
+        "wickets": 74,
+        "economy": 6.42,
+        "best_bowling": "3/23"
+      },
+      "fielding_stats": {
+        "catches": 89,
+        "stumpings": 0,
+        "run_outs": 18
+      },
+      "attributes": {
+        "batting": 85,
+        "bowling": 80,
+        "fielding": 85,
+        "fitness": 88,
+        "leadership": 90,
+        "experience": 88
+      },
+      "form": 85,
+      "morale": 88,
+      "salary": 2200000,
+      "contract_expiry": "2025-12-31",
+      "team_id": 3
+    },
+    {
+      "id": 8,
+      "name": "Kane Williamson",
+      "age": 33,
+      "nationality": "New Zealand",
+      "role": "Batsman",
+      "batting_style": "Right-handed",
+      "bowling_style": "Right-arm off-break",
+      "specialization": "Top-order batsman",
+      "batting_stats": {
+        "matches": 161,
+        "runs": 6554,
+        "average": 47.83,
+        "strike_rate": 81.03,
+        "fifties": 39,
+        "hundreds": 13,
+        "highest_score": 148
+      },
+      "bowling_stats": {
+        "wickets": 30,
+        "economy": 5.33,
+        "best_bowling": "2/22"
+      },
+      "fielding_stats": {
+        "catches": 95,
+        "stumpings": 0,
+        "run_outs": 12
+      },
+      "attributes": {
+        "batting": 90,
+        "bowling": 40,
+        "fielding": 80,
+        "fitness": 85,
+        "leadership": 92,
+        "experience": 90
+      },
+      "form": 78,
+      "morale": 85,
+      "salary": 1800000,
+      "contract_expiry": "2025-12-31",
+      "team_id": 4
+    },
+    {
+      "id": 9,
+      "name": "Trent Boult",
+      "age": 34,
+      "nationality": "New Zealand",
+      "role": "Bowler",
+      "batting_style": "Right-handed",
+      "bowling_style": "Left-arm fast-medium",
+      "specialization": "Fast bowler",
+      "batting_stats": {
+        "matches": 99,
+        "runs": 194,
+        "average": 8.08,
+        "strike_rate": 89.81,
+        "fifties": 0,
+        "hundreds": 0,
+        "highest_score": 21
+      },
+      "bowling_stats": {
+        "wickets": 141,
+        "economy": 5.37,
+        "best_bowling": "5/21"
+      },
+      "fielding_stats": {
+        "catches": 28,
+        "stumpings": 0,
+        "run_outs": 5
+      },
+      "attributes": {
+        "batting": 15,
+        "bowling": 88,
+        "fielding": 75,
+        "fitness": 85,
+        "leadership": 75,
+        "experience": 85
+      },
+      "form": 82,
+      "morale": 80,
+      "salary": 1600000,
+      "contract_expiry": "2025-12-31",
+      "team_id": 4
+    },
+    {
+      "id": 10,
+      "name": "Babar Azam",
+      "age": 29,
+      "nationality": "Pakistan",
+      "role": "Batsman",
+      "batting_style": "Right-handed",
+      "bowling_style": "Right-arm off-break",
+      "specialization": "Top-order batsman",
+      "batting_stats": {
+        "matches": 117,
+        "runs": 5729,
+        "average": 56.72,
+        "strike_rate": 88.67,
+        "fifties": 32,
+        "hundreds": 19,
+        "highest_score": 158
+      },
+      "bowling_stats": {
+        "wickets": 0,
+        "economy": 6.50,
+        "best_bowling": "0/0"
+      },
+      "fielding_stats": {
+        "catches": 42,
+        "stumpings": 0,
+        "run_outs": 8
+      },
+      "attributes": {
+        "batting": 92,
+        "bowling": 20,
+        "fielding": 75,
+        "fitness": 85,
+        "leadership": 88,
+        "experience": 80
+      },
+      "form": 88,
+      "morale": 85,
+      "salary": 1700000,
+      "contract_expiry": "2025-12-31",
+      "team_id": 5
+    }
+  ]
+} 

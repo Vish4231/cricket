@@ -1,10 +1,10 @@
-#include <SDL2/SDL.h>
 #include <random>
 #include "CommentaryManager.h"
 #include <iostream>
+#include <chrono>
 
 CommentaryManager::CommentaryManager()
-    : audioEnabled(true)
+    : audioEnabled(false)
     , audioVolume(80)
     , currentTone(CommentaryTone::EXCITED)
     , currentLanguage("English")
@@ -43,23 +43,16 @@ bool CommentaryManager::Initialize() {
         "The pressure is mounting!"
     };
     
-    // Initialize audio system
-    // TODO: Initialize audio system
+    // Audio system disabled in console mode
+    audioEnabled = false;
     
-    std::cout << "Commentary Manager initialized successfully" << std::endl;
+    std::cout << "Commentary Manager initialized successfully (Console Mode)" << std::endl;
     return true;
 }
 
 void CommentaryManager::Shutdown() {
-    // Unload all audio clips
-    for (auto& clip : audioClips) {
-        if (clip.second.chunk) {
-            Mix_FreeChunk(clip.second.chunk);
-        }
-    }
+    // Audio cleanup disabled in console mode
     audioClips.clear();
-    
-    Mix_CloseAudio();
 }
 
 void CommentaryManager::GenerateBallCommentary(const std::string& striker, const std::string& bowler, 
@@ -72,12 +65,13 @@ void CommentaryManager::GenerateBallCommentary(const std::string& striker, const
     line.tone = DetermineTone(isWicket ? CommentaryEvent::WICKET_FALLEN : CommentaryEvent::RUNS_SCORED);
     line.event = isWicket ? CommentaryEvent::WICKET_FALLEN : CommentaryEvent::RUNS_SCORED;
     line.playerName = striker;
-    line.timestamp = SDL_GetTicks();
+    uint64_t currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    line.timestamp = currentTime;
     line.isImportant = isWicket || runs >= 4;
     
     AddCommentaryLine(line);
     
-    // Play audio if enabled
+    // Audio disabled in console mode
     if (audioEnabled) {
         CommentaryEvent event = isWicket ? CommentaryEvent::WICKET_FALLEN : CommentaryEvent::RUNS_SCORED;
         PlayCommentaryAudio(event, striker);
@@ -93,7 +87,8 @@ void CommentaryManager::GenerateBoundaryCommentary(const std::string& batsman, i
     line.tone = CommentaryTone::EXCITED;
     line.event = CommentaryEvent::BOUNDARY_HIT;
     line.playerName = batsman;
-    line.timestamp = SDL_GetTicks();
+    uint64_t currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    line.timestamp = currentTime;
     line.isImportant = true;
     
     AddCommentaryLine(line);
@@ -113,7 +108,8 @@ void CommentaryManager::GenerateWicketCommentary(const std::string& batsman, con
     line.tone = CommentaryTone::DRAMATIC;
     line.event = CommentaryEvent::WICKET_FALLEN;
     line.playerName = batsman;
-    line.timestamp = SDL_GetTicks();
+    uint64_t currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    line.timestamp = currentTime;
     line.isImportant = true;
     
     AddCommentaryLine(line);
@@ -132,7 +128,8 @@ void CommentaryManager::GenerateMilestoneCommentary(const std::string& player, c
     line.tone = CommentaryTone::EXCITED;
     line.event = CommentaryEvent::MILESTONE_REACHED;
     line.playerName = player;
-    line.timestamp = SDL_GetTicks();
+    uint64_t currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    line.timestamp = currentTime;
     line.isImportant = true;
     
     AddCommentaryLine(line);
@@ -151,7 +148,8 @@ void CommentaryManager::GenerateMatchEndCommentary(const std::string& winner, co
     line.tone = CommentaryTone::DRAMATIC;
     line.event = CommentaryEvent::MATCH_END;
     line.playerName = winner;
-    line.timestamp = SDL_GetTicks();
+    uint64_t currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    line.timestamp = currentTime;
     line.isImportant = true;
     
     AddCommentaryLine(line);
@@ -217,7 +215,8 @@ void CommentaryManager::PlayCommentaryAudio(CommentaryEvent event, const std::st
 
 void CommentaryManager::SetAudioVolume(int volume) {
     audioVolume = std::max(0, std::min(128, volume));
-    Mix_Volume(-1, audioVolume);
+    // Audio disabled in console mode
+    // Mix_Volume(-1, audioVolume);
 }
 
 void CommentaryManager::SetCommentaryStyle(CommentaryTone tone) {
@@ -234,7 +233,7 @@ void CommentaryManager::UpdateCommentary() {
 
 void CommentaryManager::Update(float deltaTime) {
     // Update commentary timing
-    Uint32 currentTime = SDL_GetTicks();
+    uint64_t currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     if (currentTime - lastCommentaryTime > commentaryInterval) {
         ProcessCommentaryQueue();
         lastCommentaryTime = currentTime;
@@ -258,7 +257,8 @@ void CommentaryManager::AddStatisticalCommentary(const std::string& stat, const 
     line.type = CommentaryType::STATISTICAL;
     line.tone = CommentaryTone::ANALYTICAL;
     line.event = CommentaryEvent::PLAYER_ACHIEVEMENT;
-    line.timestamp = SDL_GetTicks();
+    uint64_t currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    line.timestamp = currentTime;
     line.isImportant = false;
     
     AddCommentaryLine(line);
@@ -273,7 +273,8 @@ void CommentaryManager::AddPlayerAnalysis(const std::string& player, const std::
     line.tone = CommentaryTone::ANALYTICAL;
     line.event = CommentaryEvent::PLAYER_ACHIEVEMENT;
     line.playerName = player;
-    line.timestamp = SDL_GetTicks();
+    uint64_t currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    line.timestamp = currentTime;
     line.isImportant = false;
     
     AddCommentaryLine(line);
@@ -288,7 +289,8 @@ void CommentaryManager::AddTeamAnalysis(const std::string& team, const std::stri
     line.tone = CommentaryTone::ANALYTICAL;
     line.event = CommentaryEvent::PLAYER_ACHIEVEMENT;
     line.teamName = team;
-    line.timestamp = SDL_GetTicks();
+    uint64_t currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    line.timestamp = currentTime;
     line.isImportant = false;
     
     AddCommentaryLine(line);
@@ -300,7 +302,8 @@ void CommentaryManager::AddCrowdReaction(const std::string& reaction) {
     line.type = CommentaryType::ATMOSPHERIC;
     line.tone = CommentaryTone::EXCITED;
     line.event = CommentaryEvent::BALL_DELIVERED;
-    line.timestamp = SDL_GetTicks();
+    uint64_t currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    line.timestamp = currentTime;
     line.isImportant = false;
     
     AddCommentaryLine(line);
@@ -312,7 +315,8 @@ void CommentaryManager::AddWeatherCommentary(const std::string& weather) {
     line.type = CommentaryType::ATMOSPHERIC;
     line.tone = CommentaryTone::CALM;
     line.event = CommentaryEvent::BALL_DELIVERED;
-    line.timestamp = SDL_GetTicks();
+    uint64_t currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    line.timestamp = currentTime;
     line.isImportant = false;
     
     AddCommentaryLine(line);
@@ -324,7 +328,8 @@ void CommentaryManager::AddPitchCommentary(const std::string& pitchCondition) {
     line.type = CommentaryType::ATMOSPHERIC;
     line.tone = CommentaryTone::ANALYTICAL;
     line.event = CommentaryEvent::BALL_DELIVERED;
-    line.timestamp = SDL_GetTicks();
+    uint64_t currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    line.timestamp = currentTime;
     line.isImportant = false;
     
     AddCommentaryLine(line);
@@ -336,7 +341,8 @@ void CommentaryManager::AddVenueCommentary(const std::string& venueInfo) {
     line.type = CommentaryType::ATMOSPHERIC;
     line.tone = CommentaryTone::CALM;
     line.event = CommentaryEvent::BALL_DELIVERED;
-    line.timestamp = SDL_GetTicks();
+    uint64_t currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    line.timestamp = currentTime;
     line.isImportant = false;
     
     AddCommentaryLine(line);
@@ -412,21 +418,23 @@ bool CommentaryManager::LoadAudioClip(const std::string& filename, CommentaryEve
 void CommentaryManager::UnloadAudioClip(const std::string& filename) {
     auto it = audioClips.find(filename);
     if (it != audioClips.end()) {
-        if (it->second.chunk) {
-            Mix_FreeChunk(it->second.chunk);
-        }
+        // Audio disabled in console mode
+        // if (it->second.chunk) {
+        //     Mix_FreeChunk(it->second.chunk);
+        // }
         audioClips.erase(it);
     }
 }
 
 void CommentaryManager::PlayAudioClip(const AudioClip& clip) {
-    if (clip.chunk && clip.isLoaded) {
-        Mix_PlayChannel(-1, clip.chunk, 0);
-        
-        if (audioCallback) {
-            audioCallback(clip.filename);
-        }
-    }
+    // Audio disabled in console mode
+    // if (clip.chunk && clip.isLoaded) {
+    //     Mix_PlayChannel(-1, clip.chunk, 0);
+    //     
+    //     if (audioCallback) {
+    //         audioCallback(clip.filename);
+    //     }
+    // }
 }
 
 std::string CommentaryManager::GetRandomTemplate(const std::string& category) {

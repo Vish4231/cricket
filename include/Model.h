@@ -5,6 +5,10 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
+
+// Forward declarations
+class Shader;
 
 struct Vertex {
     glm::vec3 position;
@@ -33,6 +37,13 @@ struct Material {
     bool hasMetallicMap;
 };
 
+struct Animation {
+    std::string name;
+    float duration;
+    std::vector<glm::mat4> keyframes;
+    std::vector<float> keyframeTimes;
+};
+
 struct Mesh {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
@@ -44,7 +55,7 @@ struct Mesh {
          const std::vector<Texture>& textures, const Material& material);
     ~Mesh();
     
-    void draw(const class Shader& shader);
+    void draw(Shader& shader);
     void setupMesh();
 };
 
@@ -58,8 +69,8 @@ public:
     bool loadFromMemory(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices);
     
     // Rendering
-    void draw(const class Shader& shader);
-    void drawInstanced(const class Shader& shader, int instanceCount);
+    void draw(Shader& shader);
+    void drawInstanced(Shader& shader, int instanceCount);
     
     // Transform
     void setTransform(const glm::mat4& transform);
@@ -90,6 +101,17 @@ public:
     float getAnimationTime() const { return animationTime; }
     bool hasAnimation() const { return !animations.empty(); }
     
+    // Animation support
+    void addAnimation(const std::string& name, const Animation& animation);
+    void playAnimation(const std::string& name, float time = 0.0f);
+    void updateAnimation(float deltaTime);
+    glm::mat4 getCurrentTransform() const;
+    
+    // Model properties
+    const std::string& getName() const { return name; }
+    const std::string& getPath() const { return path; }
+    bool hasAnimation(const std::string& name) const;
+    
     // Utility
     bool isValid() const { return !meshes.empty(); }
     size_t getMeshCount() const { return meshes.size(); }
@@ -117,9 +139,18 @@ private:
     float animationTime;
     std::vector<std::string> animations;
     
+    // Animation support
+    std::map<std::string, Animation> animationsMap;
+    std::string currentAnimation;
+    bool isAnimating;
+    
     // Statistics
     size_t totalVertices;
     size_t totalIndices;
+    
+    // Model properties
+    std::string name;
+    std::string path;
     
     // Helper methods
     void processNode(void* node, void* scene);
@@ -129,4 +160,9 @@ private:
     void updateTransform();
     GLuint loadTexture(const std::string& path);
     GLuint loadTextureFromMemory(const unsigned char* data, int width, int height, int channels);
+    void setupMesh();
+    void createDefaultPlayerModel();
+    void addDefaultAnimations();
+    void cleanup();
+    glm::mat4 interpolateKeyframes(const Animation& anim, float time) const;
 }; 

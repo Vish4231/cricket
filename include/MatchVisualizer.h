@@ -19,6 +19,8 @@ class Shader;
 class Texture;
 class ParticleSystem;
 class ScreenEffect;
+class AnimatedScoreboard;
+class UIRenderer;
 
 enum class CameraMode {
     FOLLOW_BALL,
@@ -93,7 +95,7 @@ public:
     // Rendering
     void render(float deltaTime);
     void renderField();
-    void renderPlayers();
+    void renderPlayers(float deltaTime);
     void renderBall();
     void renderUI();
     
@@ -105,11 +107,22 @@ public:
     void setCameraTransitionSpeed(float speed);
     void shakeCamera(float intensity, float duration);
     
+    // Camera controls for 3D viewing
+    void setCameraOrbit(float horizontalAngle, float verticalAngle, float distance);
+    void setCameraFocus(const glm::vec3& target);
+    void setCameraZoom(float zoomLevel);
+    void resetCamera();
+    
     // Player management
     void updatePlayerPosition(const std::string& playerName, const glm::vec3& position);
     void updatePlayerAnimation(const std::string& playerName, const std::string& animation);
     void updateBallPosition(const glm::vec3& position);
     void updateBallTrajectory(const std::vector<glm::vec3>& trajectory);
+    
+    // Player model controls
+    void focusOnPlayer(const std::string& playerName);
+    void setPlayerAnimation(const std::string& playerName, const std::string& animation);
+    void setPlayerPosition(const std::string& playerName, const glm::vec3& position);
     
     // Effects
     void addParticleEffect(const glm::vec3& position, const std::string& effectType);
@@ -146,6 +159,10 @@ public:
     // Callbacks
     void setCameraChangedCallback(std::function<void(CameraMode)> callback);
     void setPlayerClickedCallback(std::function<void(const std::string&)> callback);
+    
+    // New methods
+    void updateScoreboard(int score1, int wickets1, float overs1, int score2, int wickets2, float overs2);
+    void triggerEvent(const std::string& eventType);
 
 private:
     // OpenGL and rendering
@@ -241,4 +258,7 @@ private:
     void generateShadowMap();
     void renderToShadowMap();
     void calculateCameraPosition(CameraMode mode);
+    
+    std::unique_ptr<AnimatedScoreboard> scoreboard;
+    UIRenderer* uiRenderer;
 }; 

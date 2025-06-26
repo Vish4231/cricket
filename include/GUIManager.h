@@ -9,6 +9,7 @@
 #include <string>
 #include <functional>
 #include <map>
+#include "UIRenderer.h"
 
 // Forward declarations
 class Game;
@@ -141,6 +142,8 @@ public:
     void RenderNotifications();
     void RenderConfirmDialog();
     
+    UIRenderer* GetUIRenderer() { return uiRenderer.get(); }
+    
 private:
     // Main GUI components
     void RenderMainMenu();
@@ -260,4 +263,6 @@ private:
     
     // Tab visibility
     std::map<GUITab, bool> tabVisibility;
+    
+    std::unique_ptr<UIRenderer> uiRenderer;
 }; 

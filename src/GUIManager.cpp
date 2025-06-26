@@ -15,6 +15,7 @@ GUIManager::GUIManager(Game* g)
     , isFullscreen(false)
     , showNotifications(false)
     , showConfirmDialog(false)
+    , uiRenderer(std::make_unique<UIRenderer>())
 {
     // Initialize tab visibility
     tabVisibility[GUITab::DASHBOARD] = true;
@@ -31,6 +32,12 @@ GUIManager::~GUIManager() {
 }
 
 bool GUIManager::Initialize() {
+    // Initialize UIRenderer
+    if (!uiRenderer->initialize()) {
+        std::cerr << "Failed to initialize UIRenderer" << std::endl;
+        return false;
+    }
+    
     // Initialize ImGui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();

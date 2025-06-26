@@ -7,6 +7,7 @@
 #include <iostream>
 #include <algorithm>
 #include <cmath>
+#include "AnimatedScoreboard.h"
 
 MatchVisualizer::MatchVisualizer() 
     : framebuffer(0), renderTexture(0), depthBuffer(0)
@@ -107,6 +108,11 @@ bool MatchVisualizer::initialize(int windowWidth, int windowHeight) {
     setupLighting();
     setupCamera();
     
+    // In initialize() (after teams are set up):
+    scoreboard = std::make_unique<AnimatedScoreboard>(uiRenderer);
+    scoreboard->setTeams(team1 ? team1->GetName() : "Team 1", team2 ? team2->GetName() : "Team 2");
+    scoreboard->setScores(0, 0, 0.0f, 0, 0, 0.0f);
+    
     std::cout << "MatchVisualizer initialized successfully" << std::endl;
     return true;
 }
@@ -174,7 +180,7 @@ void MatchVisualizer::render(float deltaTime) {
     
     // Render scene
     renderField();
-    renderPlayers();
+    renderPlayers(deltaTime);
     renderBall();
     
     // Render UI
@@ -186,6 +192,12 @@ void MatchVisualizer::render(float deltaTime) {
     
     // Apply post-processing effects
     renderScreenEffects();
+    
+    // In render(float deltaTime):
+    if (scoreboard) {
+        scoreboard->update(deltaTime);
+        scoreboard->render(glm::vec2(50, 20));
+    }
 }
 
 void MatchVisualizer::renderField() {
@@ -210,7 +222,7 @@ void MatchVisualizer::renderField() {
     fieldModel->draw(*fieldShader);
 }
 
-void MatchVisualizer::renderPlayers() {
+void MatchVisualizer::renderPlayers(float deltaTime) {
     if (!playerShader || !playerModel) return;
     
     playerShader->use();
@@ -224,8 +236,45 @@ void MatchVisualizer::renderPlayers() {
     playerShader->setFloat("ambientStrength", lightingSettings.ambientIntensity);
     playerShader->setFloat("diffuseStrength", lightingSettings.directionalIntensity);
     
-    // Render players (simplified)
-    playerModel->draw(*playerShader);
+    // Update player animations
+    if (playerModel) {
+        playerModel->updateAnimation(deltaTime);
+    }
+    
+    // Render players with different positions and animations
+    // Batsman
+    if (playerModel) {
+        playerModel->setPosition(glm::vec3(0, 0, 5)); // At batting crease
+        playerModel->setRotation(glm::vec3(0, 180, 0)); // Facing bowler
+        playerModel->playAnimation("batting");
+        playerModel->draw(*playerShader);
+    }
+    
+    // Bowler
+    if (playerModel) {
+        playerModel->setPosition(glm::vec3(0, 0, -15)); // At bowling crease
+        playerModel->setRotation(glm::vec3(0, 0, 0)); // Facing batsman
+        playerModel->playAnimation("bowling");
+        playerModel->draw(*playerShader);
+    }
+    
+    // Fielders (simplified - just a few key positions)
+    std::vector<glm::vec3> fielderPositions = {
+        glm::vec3(10, 0, 0),   // Mid-wicket
+        glm::vec3(-10, 0, 0),  // Cover
+        glm::vec3(0, 0, 10),   // Long-on
+        glm::vec3(5, 0, -5),   // Point
+        glm::vec3(-5, 0, -5)   // Gully
+    };
+    
+    for (const auto& pos : fielderPositions) {
+        if (playerModel) {
+            playerModel->setPosition(pos);
+            playerModel->setRotation(glm::vec3(0, 0, 0));
+            playerModel->playAnimation("idle");
+            playerModel->draw(*playerShader);
+        }
+    }
 }
 
 void MatchVisualizer::renderBall() {
@@ -556,4 +605,56 @@ void MatchVisualizer::renderScreenEffects() {
 
 void MatchVisualizer::renderUIElements() {
     // Simplified UI elements rendering
+}
+
+void MatchVisualizer::updateScoreboard(int score1, int wickets1, float overs1, int score2, int wickets2, float overs2) {
+    scoreboard->setScores(score1, wickets1, overs1, score2, wickets2, overs2);
+}
+
+void MatchVisualizer::triggerEvent(const std::string& eventType) {
+    scoreboard->triggerEvent(eventType, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+}
+
+void MatchVisualizer::setCameraOrbit(float horizontalAngle, float verticalAngle, float distance) {
+    // Convert spherical coordinates to Cartesian
+    float x = distance * cos(verticalAngle) * sin(horizontalAngle);
+    float y = distance * sin(verticalAngle);
+    float z = distance * cos(verticalAngle) * cos(horizontalAngle);
+    
+    cameraSettings.position = glm::vec3(x, y, z);
+    cameraSettings.target = glm::vec3(0, 0, 0); // Focus on center of field
+}
+
+void MatchVisualizer::setCameraFocus(const glm::vec3& target) {
+    cameraSettings.target = target;
+}
+
+void MatchVisualizer::setCameraZoom(float zoomLevel) {
+    // Adjust camera distance based on zoom level
+    glm::vec3 direction = glm::normalize(cameraSettings.position - cameraSettings.target);
+    float currentDistance = glm::length(cameraSettings.position - cameraSettings.target);
+    float newDistance = glm::clamp(currentDistance / zoomLevel, 5.0f, 50.0f);
+    
+    cameraSettings.position = cameraSettings.target + direction * newDistance;
+}
+
+void MatchVisualizer::resetCamera() {
+    // Reset to default camera position
+    cameraSettings.position = glm::vec3(0, 15, 25);
+    cameraSettings.target = glm::vec3(0, 0, 0);
+    cameraSettings.up = glm::vec3(0, 1, 0);
+}
+
+void MatchVisualizer::focusOnPlayer(const std::string& playerName) {
+    // Focus camera on specific player
+    glm::vec3 playerPosition = glm::vec3(0, 0, 0); // Default position
+    
+    if (playerName == "batsman") {
+        playerPosition = glm::vec3(0, 0, 5);
+    } else if (playerName == "bowler") {
+        playerPosition = glm::vec3(0, 0, -15);
+    }
+    // Add more player positions as needed
+    
+    setCameraFocus(playerPosition);
 } 
