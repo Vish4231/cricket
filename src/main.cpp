@@ -532,13 +532,13 @@ void IPLManager::showMainMenu() {
     
     std::cout << "╔══════════════════════════════════════════════════════════════╗\n";
     std::cout << "║                                                              ║\n";
-    std::cout << "║  🎮 1. Start Career                                         ║\n";
-    std::cout << "║  ⚙️  2. Settings                                            ║\n";
-    std::cout << "║  🚪 3. Quit Game                                            ║\n";
+    std::cout << "║  1. Start Career                                             ║\n";
+    std::cout << "║  2. Settings                                                 ║\n";
+    std::cout << "║  3. Quit Game                                                ║\n";
     std::cout << "║                                                              ║\n";
     std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
     std::cout << "\n";
-    std::cout << "Enter your choice: ";
+    std::cout << "Enter your choice (1-3): ";
 }
 
 void IPLManager::showAvatarCustomization() {
@@ -551,14 +551,14 @@ void IPLManager::showAvatarCustomization() {
     std::cout << "║  Name: " << std::left << std::setw(50) << managerProfile.name << "║\n";
     std::cout << "║  Avatar: " << std::left << std::setw(47) << managerProfile.avatar << "║\n";
     std::cout << "║                                                              ║\n";
-    std::cout << "║  🏷️  1. Set Name                                            ║\n";
-    std::cout << "║  🎭 2. Select Avatar                                        ║\n";
-    std::cout << "║  ➡️  3. Continue to Team Selection                          ║\n";
-    std::cout << "║  ⬅️  back. Go Back                                          ║\n";
+    std::cout << "║  1. Set Name                                                ║\n";
+    std::cout << "║  2. Select Avatar                                           ║\n";
+    std::cout << "║  3. Continue to Team Selection                              ║\n";
+    std::cout << "║  0. Go Back                                                 ║\n";
     std::cout << "║                                                              ║\n";
     std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
     std::cout << "\n";
-    std::cout << "Enter your choice: ";
+    std::cout << "Enter your choice (0-3): ";
 }
 
 void IPLManager::showTeamSelection() {
@@ -591,7 +591,7 @@ void IPLManager::showTeamSelection() {
     std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
     
     std::cout << "\n";
-    std::cout << "Enter team number (1-" << iplTeams.size() << ") or 'back' to return: ";
+    std::cout << "Enter team number (1-" << iplTeams.size() << ") or 0 to return: ";
 }
 
 void IPLManager::showAuction() {
@@ -1721,9 +1721,9 @@ void IPLManager::simulateAuction() {
     
     // Display final squads
     std::cout << "\n🏆 Auction Complete! Final Squads:\n";
-    std::cout << "╔══════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  Team                Squad  Overseas  Budget    Strategy     ║\n";
-    std::cout << "╠══════════════════════════════════════════════════════════════╣\n";
+    std::cout << "╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗\n";
+    std::cout << "║  Team                Squad  Overseas  Budget    Strategy  WK  AR  Bowl  Bat  Valid  ║\n";
+    std::cout << "╠══════════════════════════════════════════════════════════════════════════════════════════════════════════════╣\n";
     
     for (const auto& ai : aiTeams) {
         std::string strategyName;
@@ -1734,14 +1734,39 @@ void IPLManager::simulateAuction() {
             case AIStrategy::WILDCARD: strategyName = "Wildcard"; break;
         }
         
+        SquadStats stats = getSquadStats(ai);
+        bool isValid = validateSquadRequirements(ai);
+        std::string validStatus = isValid ? "✓" : "✗";
+        
         std::string marker = (ai.team.name == managerProfile.selectedTeam) ? "▶ " : "  ";
         std::cout << "║  " << marker << std::left << std::setw(18) << ai.team.name
                   << std::setw(7) << ai.squad.size()
                   << std::setw(10) << ai.overseasCount
                   << std::setw(10) << std::fixed << std::setprecision(1) << ai.budget
-                  << std::setw(12) << strategyName << " ║\n";
+                  << std::setw(12) << strategyName
+                  << std::setw(4) << stats.wicketKeepers
+                  << std::setw(4) << stats.allRounders
+                  << std::setw(6) << stats.bowlers
+                  << std::setw(5) << stats.batsmen
+                  << std::setw(6) << validStatus << " ║\n";
     }
-    std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
+    std::cout << "╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝\n";
+    
+    // Check if all teams meet requirements
+    bool allTeamsValid = true;
+    for (const auto& ai : aiTeams) {
+        if (!validateSquadRequirements(ai)) {
+            allTeamsValid = false;
+            break;
+        }
+    }
+    
+    if (allTeamsValid) {
+        std::cout << "\n✅ All teams meet the minimum squad requirements!\n";
+    } else {
+        std::cout << "\n⚠️  Some teams do not meet the minimum squad requirements.\n";
+        std::cout << "Minimum requirements: 18+ players, 1+ WK, 3+ AR, 5+ Bowlers, 5+ Batsmen\n";
+    }
     
     // Mark auction as complete
     auctionComplete = true;
@@ -1870,6 +1895,10 @@ void IPLManager::manualAuction() {
                 if (userPassed) continue;
                 std::cout << "\nCurrent bid: ₹" << currentBid << " crore by " << currentBidder << std::endl;
                 std::cout << "Your budget: ₹" << userTeam->budget << " crore, Squad: " << userTeam->squad.size() << "/25, Overseas: " << userTeam->overseasCount << "/8" << std::endl;
+                
+                // Show squad requirements
+                SquadStats stats = getSquadStats(*userTeam);
+                std::cout << "Squad: WK(" << stats.wicketKeepers << "/1) AR(" << stats.allRounders << "/3) Bowl(" << stats.bowlers << "/5) Bat(" << stats.batsmen << "/5)" << std::endl;
                 
                 // Check if next bid would exceed maximum
                 if (currentBid + 0.5f > MAX_BID) {
@@ -2207,6 +2236,32 @@ void IPLManager::showDetailedSquad() {
     std::cout << "║  Average Ratings: Bat " << std::fixed << std::setprecision(1) << std::setw(5) << avgBatting 
               << "    Bowl " << std::setw(5) << avgBowling << "    Field " << std::setw(5) << avgFielding << "        ║\n";
     std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
+    
+    // Check minimum requirements
+    bool meetsRequirements = validateSquadRequirements(*userTeam);
+    std::cout << "\n📋 MINIMUM REQUIREMENTS STATUS:\n";
+    std::cout << "╔══════════════════════════════════════════════════════════════╗\n";
+    std::cout << "║  Requirement                    Required  Current  Status    ║\n";
+    std::cout << "╠══════════════════════════════════════════════════════════════╣\n";
+    std::cout << "║  Total Players                  ≥18       " << std::setw(7) << userTeam->squad.size() 
+              << "  " << (userTeam->squad.size() >= 18 ? "✓" : "✗") << "        ║\n";
+    std::cout << "║  Wicket-keepers                 ≥1        " << std::setw(7) << wicketKeepers 
+              << "  " << (wicketKeepers >= 1 ? "✓" : "✗") << "        ║\n";
+    std::cout << "║  All-rounders                   ≥3        " << std::setw(7) << allRounders 
+              << "  " << (allRounders >= 3 ? "✓" : "✗") << "        ║\n";
+    std::cout << "║  Bowlers                        ≥5        " << std::setw(7) << bowlers 
+              << "  " << (bowlers >= 5 ? "✓" : "✗") << "        ║\n";
+    std::cout << "║  Batsmen                        ≥5        " << std::setw(7) << batsmen 
+              << "  " << (batsmen >= 5 ? "✓" : "✗") << "        ║\n";
+    std::cout << "║  Overseas Players               ≤8        " << std::setw(7) << overseas 
+              << "  " << (overseas <= 8 ? "✓" : "✗") << "        ║\n";
+    std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
+    
+    if (meetsRequirements) {
+        std::cout << "\n✅ Squad meets all minimum requirements!\n";
+    } else {
+        std::cout << "\n⚠️  Squad does not meet all minimum requirements.\n";
+    }
     
     std::cout << "\nPress Enter to continue...";
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
