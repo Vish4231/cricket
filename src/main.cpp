@@ -1535,19 +1535,20 @@ void IPLManager::simulateAuction() {
 void IPLManager::showAvailablePlayers() {
     printBanner("📊 AVAILABLE PLAYERS");
     std::cout << "\n";
-    std::cout << "╔══════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  Name                Role      Nationality  Price   Rating  ║\n";
-    std::cout << "╠══════════════════════════════════════════════════════════════╣\n";
+    std::cout << "╔══════════════════════════════════════════════════════════════════════════════════╗\n";
+    std::cout << "║  Name                Role      Nationality  Approach   Price   Rating          ║\n";
+    std::cout << "╠══════════════════════════════════════════════════════════════════════════════════╣\n";
     
     for (const auto& player : availablePlayers) {
         float avgRating = (player.battingRating + player.bowlingRating + player.fieldingRating) / 3.0f;
         std::cout << "║  " << std::left << std::setw(20) << player.name
                   << std::setw(10) << player.role
                   << std::setw(13) << player.nationality
+                  << std::setw(11) << player.battingApproach
                   << std::setw(8) << std::fixed << std::setprecision(1) << player.price
                   << std::setw(8) << std::fixed << std::setprecision(1) << avgRating << " ║\n";
     }
-    std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
+    std::cout << "╚══════════════════════════════════════════════════════════════════════════════════╝\n";
     std::cout << "\nTotal available players: " << availablePlayers.size() << "\n";
     std::cout << "\nPress Enter to continue...";
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -1571,24 +1572,25 @@ void IPLManager::showCurrentSquad() {
         return;
     }
     
-    std::cout << "╔══════════════════════════════════════════════════════════════╗\n";
+    std::cout << "╔══════════════════════════════════════════════════════════════════════════════════╗\n";
     std::cout << "║  " << std::left << std::setw(50) << managerProfile.selectedTeam << "║\n";
     std::cout << "║  Budget: ₹" << std::fixed << std::setprecision(1) << std::setw(8) << userTeam->budget << " crore";
     std::cout << "  Squad: " << userTeam->squad.size() << "/25";
     std::cout << "  Overseas: " << userTeam->overseasCount << "/8" << std::setw(15) << " ║\n";
-    std::cout << "╠══════════════════════════════════════════════════════════════╣\n";
-    std::cout << "║  Name                Role      Nationality  Price   Rating  ║\n";
-    std::cout << "╠══════════════════════════════════════════════════════════════╣\n";
+    std::cout << "╠══════════════════════════════════════════════════════════════════════════════════╣\n";
+    std::cout << "║  Name                Role      Nationality  Approach   Price   Rating          ║\n";
+    std::cout << "╠══════════════════════════════════════════════════════════════════════════════════╣\n";
     
     for (const auto& player : userTeam->squad) {
         float avgRating = (player.battingRating + player.bowlingRating + player.fieldingRating) / 3.0f;
         std::cout << "║  " << std::left << std::setw(20) << player.name
                   << std::setw(10) << player.role
                   << std::setw(13) << player.nationality
+                  << std::setw(11) << player.battingApproach
                   << std::setw(8) << std::fixed << std::setprecision(1) << player.price
                   << std::setw(8) << std::fixed << std::setprecision(1) << avgRating << " ║\n";
     }
-    std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
+    std::cout << "╚══════════════════════════════════════════════════════════════════════════════════╝\n";
     std::cout << "\nPress Enter to continue...";
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
