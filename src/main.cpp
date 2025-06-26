@@ -1656,6 +1656,20 @@ void IPLManager::simulateAuction() {
     std::mt19937 g(rd());
     std::shuffle(auctionPool.begin(), auctionPool.end(), g);
     
+    // Find user's team
+    AITeam* userTeam = nullptr;
+    for (auto& ai : aiTeams) {
+        if (ai.team.name == managerProfile.selectedTeam) {
+            userTeam = &ai;
+            break;
+        }
+    }
+    
+    if (!userTeam) {
+        std::cout << "Error: User team not found!\n";
+        return;
+    }
+    
     // Simulate auction for each player
     for (const auto& player : auctionPool) {
         // Find eligible teams (budget, squad size, overseas limits, and role requirements)
@@ -1698,7 +1712,36 @@ void IPLManager::simulateAuction() {
             continue;
         }
         
-        // Simulate bidding
+        // Give user's team priority if they need this player and have less than 18 players
+        SquadStats userStats = getSquadStats(*userTeam);
+        bool userNeedsPlayer = false;
+        if (player.role == "Wicket-keeper" && userStats.wicketKeepers < 1) {
+            userNeedsPlayer = true;
+        } else if (player.role == "All-rounder" && userStats.allRounders < 3) {
+            userNeedsPlayer = true;
+        } else if (player.role == "Bowler" && userStats.bowlers < 5) {
+            userNeedsPlayer = true;
+        } else if (player.role == "Batsman" && userStats.batsmen < 5) {
+            userNeedsPlayer = true;
+        } else if (userStats.totalPlayers < 18) {
+            userNeedsPlayer = true;
+        }
+        
+        // If user needs this player and has less than 18 players, give them priority
+        if (userNeedsPlayer && userStats.totalPlayers < 18 && 
+            userTeam->budget >= player.price && 
+            (player.nationality == "Indian" || userTeam->overseasCount < 8)) {
+            
+            // User gets the player at base price
+            userTeam->squad.push_back(player);
+            userTeam->budget -= player.price;
+            if (player.nationality == "Overseas") userTeam->overseasCount++;
+            
+            std::cout << player.name << " → " << userTeam->team.name << " (₹" << player.price << " crore) [Priority]\n";
+            continue;
+        }
+        
+        // Simulate bidding for other teams
         float currentBid = player.price;
         AITeam* winner = nullptr;
         const float MAX_BID = 30.0f;
@@ -1781,7 +1824,32 @@ void IPLManager::simulateAuction() {
         if (!assigned) unassignedPlayers.push_back(player);
     }
 
+    // First, ensure user's team gets at least 18 players
+    SquadStats userStats = getSquadStats(*userTeam);
+    while (userStats.totalPlayers < 18 && !unassignedPlayers.empty()) {
+        // Find cheapest available player
+        auto it = std::min_element(unassignedPlayers.begin(), unassignedPlayers.end(), 
+            [](const IPLPlayer& a, const IPLPlayer& b) { return a.price < b.price; });
+        
+        if (it != unassignedPlayers.end() && userTeam->budget >= it->price && 
+            (it->nationality == "Indian" || userTeam->overseasCount < 8)) {
+            
+            userTeam->squad.push_back(*it);
+            userTeam->budget -= it->price;
+            if (it->nationality == "Overseas") userTeam->overseasCount++;
+            unassignedPlayers.erase(it);
+            
+            std::cout << it->name << " → " << userTeam->team.name << " (₹" << it->price << " crore) [Auto-assigned]\n";
+            userStats = getSquadStats(*userTeam);
+        } else {
+            break; // Can't afford or no suitable players
+        }
+    }
+
+    // Then fill requirements for other teams
     for (auto& ai : aiTeams) {
+        if (&ai == userTeam) continue; // Skip user team as we already handled it
+        
         SquadStats stats = getSquadStats(ai);
         // Helper to assign cheapest available player of a role
         auto assignRole = [&](const std::string& role, int needed) {
