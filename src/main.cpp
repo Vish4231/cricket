@@ -177,6 +177,16 @@ private:
     void showAvailablePlayers();
     void showCurrentSquad();
     void manualAuction();  // Add manual auction method
+    
+    // Avatar and Logo helpers
+    std::string getTeamLogo(const std::string& teamName);
+    std::string getManagerAvatar();
+    
+    // New method for simulating entire season
+    void simulateEntireSeason();
+    
+    // Simulate a Super Over between two teams
+    std::string simulateSuperOver(const std::string& team1, const std::string& team2);
 };
 
 // Constructor
@@ -300,10 +310,15 @@ void IPLManager::handleInput() {
         case GameState::AUCTION:
             if (input == "back") {
                 currentState = GameState::TEAM_SELECTION;
-            } else if (input == "continue") {
-                currentState = GameState::SEASON_CALENDAR;
-                generateSeasonFixtures();
-                seasonInProgress = true;
+            } else if (input == "continue" || input == "5") {
+                if (auctionComplete) {
+                    currentState = GameState::SEASON_CALENDAR;
+                    generateSeasonFixtures();
+                    seasonInProgress = true;
+                } else {
+                    std::cout << "Please complete the auction first!" << std::endl;
+                    waitForInput();
+                }
             } else if (input == "1") {
                 // Manual Auction
                 manualAuction();
@@ -316,6 +331,8 @@ void IPLManager::handleInput() {
             } else if (input == "4") {
                 // View Current Squad
                 showCurrentSquad();
+            } else if (input == "6") {
+                simulateEntireSeason();
             }
             break;
             
@@ -508,24 +525,34 @@ void IPLManager::showAvatarCustomization() {
 void IPLManager::showTeamSelection() {
     printBanner("🏏 TEAM SELECTION");
     std::cout << "\n";
-    printCentered("Choose your IPL team for the 2025 season:");
-    std::cout << "\n";
+    printCentered("Choose your IPL team for the 2025 season!\n");
     
+    // Display team logos and information
     std::cout << "╔══════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║                                                              ║\n";
+    std::cout << "║  Available Teams:                                            ║\n";
+    std::cout << "╠══════════════════════════════════════════════════════════════╣\n";
     
     for (size_t i = 0; i < iplTeams.size(); i++) {
-        std::cout << "║  " << std::left << std::setw(2) << (i + 1) << ". " 
-                  << std::setw(20) << iplTeams[i].name 
-                  << " (" << std::setw(15) << iplTeams[i].city << ") ║\n";
+        std::string logo = getTeamLogo(iplTeams[i].name);
+        std::string marker = (managerProfile.selectedTeam == iplTeams[i].name) ? "▶ " : "  ";
+        
+        std::cout << "║  " << marker << std::left << std::setw(2) << (i + 1) << ". " << std::setw(25) << iplTeams[i].name;
+        std::cout << " | " << std::setw(15) << iplTeams[i].city;
+        std::cout << " | " << std::setw(8) << std::fixed << std::setprecision(1) << iplTeams[i].budget << "Cr ║\n";
+        
+        // Display team logo
+        if (!logo.empty()) {
+            std::cout << "║     " << logo << std::setw(45 - logo.length()) << " ║\n";
+        }
+        
+        if (i < iplTeams.size() - 1) {
+            std::cout << "║                                                                  ║\n";
+        }
     }
-    
-    std::cout << "║                                                              ║\n";
-    std::cout << "║  ⬅️  back. Go Back                                          ║\n";
-    std::cout << "║                                                              ║\n";
     std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
+    
     std::cout << "\n";
-    std::cout << "Enter your choice: ";
+    std::cout << "Enter team number (1-" << iplTeams.size() << ") or 'back' to return: ";
 }
 
 void IPLManager::showAuction() {
@@ -565,6 +592,8 @@ void IPLManager::showAuction() {
     std::cout << "║  👥 4. View Current Squad                                   ║\n";
     std::cout << "║  ➡️  5. Continue to Season                                  ║\n";
     std::cout << "║  ⬅️  back. Go Back                                          ║\n";
+    std::cout << "║                                                              ║\n";
+    std::cout << "║  🏁 6. Simulate Entire Season (Show only final scores)       ║\n";
     std::cout << "║                                                              ║\n";
     std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
     std::cout << "\n";
@@ -778,34 +807,57 @@ void IPLManager::initializeIPLTeams() {
 }
 
 void IPLManager::loadPlayersFromAPI() {
-    // For now, create some sample players
-    // In a real implementation, this would fetch from the API
-    std::vector<std::tuple<std::string, std::string, std::string, std::string, float, float, float, float>> playerData = {
-        {"Virat Kohli", "Royal Challengers Bangalore", "Batsman", "Indian", 95.0f, 30.0f, 85.0f, 20.0f},
-        {"Rohit Sharma", "Mumbai Indians", "Batsman", "Indian", 92.0f, 25.0f, 80.0f, 18.0f},
-        {"MS Dhoni", "Chennai Super Kings", "Wicket-keeper", "Indian", 88.0f, 20.0f, 90.0f, 15.0f},
-        {"Jasprit Bumrah", "Mumbai Indians", "Bowler", "Indian", 30.0f, 95.0f, 85.0f, 22.0f},
-        {"Rashid Khan", "Gujarat Titans", "Bowler", "Overseas", 40.0f, 92.0f, 88.0f, 18.0f},
-        {"Andre Russell", "Kolkata Knight Riders", "All-rounder", "Overseas", 85.0f, 88.0f, 82.0f, 16.0f},
-        {"Ben Stokes", "Chennai Super Kings", "All-rounder", "Overseas", 82.0f, 85.0f, 80.0f, 16.5f},
-        {"KL Rahul", "Lucknow Super Giants", "Batsman", "Indian", 90.0f, 25.0f, 75.0f, 17.0f},
-        {"Rishabh Pant", "Delhi Capitals", "Wicket-keeper", "Indian", 85.0f, 20.0f, 85.0f, 16.0f},
-        {"Hardik Pandya", "Gujarat Titans", "All-rounder", "Indian", 80.0f, 75.0f, 78.0f, 15.0f}
+    // IPL teams
+    std::vector<std::string> teams = {
+        "Mumbai Indians", "Chennai Super Kings", "Royal Challengers Bangalore", "Kolkata Knight Riders", "Delhi Capitals", "Punjab Kings", "Rajasthan Royals", "Sunrisers Hyderabad", "Gujarat Titans", "Lucknow Super Giants"
     };
+    // Example Indian and overseas names (expand as needed)
+    std::vector<std::string> indianNames = {
+        "Rohit Sharma", "Ishan Kishan", "Suryakumar Yadav", "Tilak Varma", "Nehal Wadhera", "Shivam Dube", "Ruturaj Gaikwad", "Ajinkya Rahane", "Prithvi Shaw", "Shubman Gill", "KL Rahul", "Mayank Agarwal", "Rinku Singh", "Nitish Rana", "Venkatesh Iyer", "Devdutt Padikkal", "Rajat Patidar", "Abhishek Sharma", "Yashasvi Jaiswal", "Sanju Samson", "Ravindra Jadeja", "Deepak Chahar", "Jasprit Bumrah", "Harshal Patel", "Mohammed Siraj", "Umesh Yadav", "Tushar Deshpande", "Arshdeep Singh", "Avesh Khan", "Mukesh Kumar", "Yash Dayal", "Varun Chakravarthy", "Yuzvendra Chahal", "Krunal Pandya", "Washington Sundar", "Navdeep Saini", "Shahbaz Ahmed", "Kuldeep Yadav", "Axar Patel", "Simarjeet Singh", "Rajvardhan Hangargekar", "Prashant Solanki", "Ajay Mandal", "Bhagath Varma", "Nishant Sindhu", "Shaik Rasheed", "Subhranshu Senapati", "Kumar Kartikeya", "Piyush Chawla", "Arjun Tendulkar", "Raghav Goyal"
+    };
+    std::vector<std::string> overseasNames = {
+        "Tim David", "Cameron Green", "Dewald Brevis", "Tristan Stubbs", "Devon Conway", "Ben Stokes", "Moeen Ali", "Mitchell Santner", "Kyle Jamieson", "Faf du Plessis", "Glenn Maxwell", "Josh Hazlewood", "Wanindu Hasaranga", "David Warner", "Mitchell Marsh", "Rilee Rossouw", "Phil Salt", "Liam Livingstone", "Sam Curran", "Kagiso Rabada", "Jonny Bairstow", "Jos Buttler", "Trent Boult", "Shimron Hetmyer", "Obed McCoy", "Rashid Khan", "David Miller", "Matthew Wade", "Alzarri Joseph", "Lockie Ferguson", "Kane Williamson", "Nicholas Pooran", "Quinton de Kock", "Marcus Stoinis", "Mark Wood", "Kyle Mayers", "Aiden Markram", "Heinrich Klaasen", "Marco Jansen", "Pat Cummins", "Harry Brook", "Rahmanullah Gurbaz", "Andre Russell", "Sunil Narine", "Tim Southee", "Jason Roy", "Dwaine Pretorius", "Sisanda Magala", "Chris Jordan", "Jofra Archer", "Riley Meredith"
+    };
+    std::vector<std::string> roles = {"Batsman", "Bowler", "All-rounder", "Wicket-keeper"};
+    std::vector<std::string> nationalities = {"Indian", "Overseas"};
     
-    for (const auto& [name, team, role, nationality, batting, bowling, fielding, price] : playerData) {
-        IPLPlayer player;
-        player.name = name;
-        player.team = team;
-        player.role = role;
-        player.nationality = nationality;
-        player.battingRating = batting;
-        player.bowlingRating = bowling;
-        player.fieldingRating = fielding;
-        player.price = price;
-        player.age = 25 + (rand() % 15); // Random age between 25-40
-        availablePlayers.push_back(player);
+    // Clear previous
+    availablePlayers.clear();
+    srand(42); // For reproducibility
+    int indianIdx = 0, overseasIdx = 0;
+    for (const auto& team : teams) {
+        // 14 Indian players
+        for (int i = 0; i < 14; ++i) {
+            IPLPlayer player;
+            player.name = indianNames[indianIdx % indianNames.size()] + " " + std::to_string(i+1);
+            player.team = team;
+            player.role = roles[i % roles.size()];
+            player.nationality = "Indian";
+            player.battingRating = 55 + rand() % 45; // 55-99
+            player.bowlingRating = 40 + rand() % 60; // 40-99
+            player.fieldingRating = 50 + rand() % 50; // 50-99
+            player.price = 4 + (rand() % 25); // 4-28 crore
+            player.age = 20 + (rand() % 17); // 20-36
+            availablePlayers.push_back(player);
+            ++indianIdx;
+        }
+        // 8 Overseas players
+        for (int i = 0; i < 8; ++i) {
+            IPLPlayer player;
+            player.name = overseasNames[overseasIdx % overseasNames.size()] + " " + std::to_string(i+1);
+            player.team = team;
+            player.role = roles[(i+1) % roles.size()];
+            player.nationality = "Overseas";
+            player.battingRating = 60 + rand() % 40; // 60-99
+            player.bowlingRating = 45 + rand() % 55; // 45-99
+            player.fieldingRating = 55 + rand() % 45; // 55-99
+            player.price = 6 + (rand() % 25); // 6-30 crore
+            player.age = 22 + (rand() % 15); // 22-36
+            availablePlayers.push_back(player);
+            ++overseasIdx;
+        }
     }
+    std::cout << "Loaded " << availablePlayers.size() << " players into auction pool.\n";
 }
 
 void IPLManager::generateSeasonFixtures() {
@@ -841,25 +893,96 @@ void IPLManager::generateSeasonFixtures() {
 }
 
 void IPLManager::simulateMatch(Match& match) {
-    // Simple match simulation
+    // Over-by-over simulation with commentary
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> scoreDist(120, 200);
-    std::uniform_int_distribution<> resultDist(0, 1);
+    std::uniform_int_distribution<> runsDist(0, 6); // 0-6 runs per ball
+    std::uniform_int_distribution<> wicketDist(0, 19); // 0 = wicket (5% chance)
+    std::uniform_int_distribution<> boundaryDist(0, 3); // 0 = boundary (25% chance)
+    int overs = 20;
+    int ballsPerOver = 6;
+    int team1Score = 0, team2Score = 0;
+    int team1Wickets = 0, team2Wickets = 0;
+    std::vector<std::string> commentary;
     
-    match.team1Score = scoreDist(gen);
-    match.team2Score = scoreDist(gen);
-    match.isPlayed = true;
+    // Team 1 batting
+    std::cout << "\n" << match.team1 << " Innings:\n";
+    for (int over = 1; over <= overs && team1Wickets < 10; ++over) {
+        int overRuns = 0, overWickets = 0;
+        for (int ball = 1; ball <= ballsPerOver && team1Wickets < 10; ++ball) {
+            int runs = runsDist(gen);
+            bool wicket = (wicketDist(gen) == 0);
+            overRuns += runs;
+            team1Score += runs;
+            std::string event = "";
+            if (wicket) {
+                team1Wickets++;
+                overWickets++;
+                event = "WICKET! ";
+            }
+            if (runs == 4) event += "FOUR! ";
+            if (runs == 6) event += "SIX! ";
+            if (!event.empty()) {
+                commentary.push_back("Over " + std::to_string(over) + "." + std::to_string(ball) + ": " + event);
+            }
+        }
+        std::cout << "Over " << over << ": " << overRuns << " runs, " << overWickets << " wickets. Total: " << team1Score << "/" << team1Wickets << "\n";
+    }
+    std::cout << "End of Innings: " << match.team1 << " " << team1Score << "/" << team1Wickets << "\n";
     
-    if (match.team1Score > match.team2Score) {
-        match.winner = match.team1;
-    } else if (match.team2Score > match.team1Score) {
-        match.winner = match.team2;
-    } else {
-        match.winner = "Tie";
+    // Team 2 batting
+    std::cout << "\n" << match.team2 << " Innings:\n";
+    for (int over = 1; over <= overs && team2Wickets < 10 && team2Score <= team1Score; ++over) {
+        int overRuns = 0, overWickets = 0;
+        for (int ball = 1; ball <= ballsPerOver && team2Wickets < 10 && team2Score <= team1Score; ++ball) {
+            int runs = runsDist(gen);
+            bool wicket = (wicketDist(gen) == 0);
+            overRuns += runs;
+            team2Score += runs;
+            std::string event = "";
+            if (wicket) {
+                team2Wickets++;
+                overWickets++;
+                event = "WICKET! ";
+            }
+            if (runs == 4) event += "FOUR! ";
+            if (runs == 6) event += "SIX! ";
+            if (!event.empty()) {
+                commentary.push_back("Over " + std::to_string(over) + "." + std::to_string(ball) + ": " + event);
+            }
+        }
+        std::cout << "Over " << over << ": " << overRuns << " runs, " << overWickets << " wickets. Total: " << team2Score << "/" << team2Wickets << "\n";
+        if (team2Score > team1Score) break;
+    }
+    std::cout << "End of Innings: " << match.team2 << " " << team2Score << "/" << team2Wickets << "\n";
+    
+    // Print key commentary
+    std::cout << "\nKey Moments:\n";
+    for (const auto& line : commentary) {
+        std::cout << line << "\n";
     }
     
-    // Update team statistics
+    match.team1Score = team1Score;
+    match.team2Score = team2Score;
+    match.isPlayed = true;
+    if (team1Score > team2Score) {
+        match.winner = match.team1;
+    } else if (team2Score > team1Score) {
+        match.winner = match.team2;
+    } else {
+        // Tie! Super Over time
+        std::cout << "\nMatch tied! A Super Over will decide the winner.\n";
+        std::string superOverWinner;
+        do {
+            superOverWinner = simulateSuperOver(match.team1, match.team2);
+            if (superOverWinner == "Tie") {
+                std::cout << "Super Over tied! Another Super Over will be played.\n";
+            }
+        } while (superOverWinner == "Tie");
+        match.winner = superOverWinner;
+        std::cout << "Super Over Winner: " << superOverWinner << "!\n";
+    }
+    // Update team and manager stats (unchanged)
     for (auto& team : iplTeams) {
         if (team.name == match.team1) {
             if (match.winner == match.team1) {
@@ -883,8 +1006,6 @@ void IPLManager::simulateMatch(Match& match) {
             }
         }
     }
-    
-    // Update manager statistics
     if (match.team1 == managerProfile.selectedTeam || match.team2 == managerProfile.selectedTeam) {
         managerProfile.totalMatches++;
         if (match.winner == managerProfile.selectedTeam) {
@@ -894,6 +1015,47 @@ void IPLManager::simulateMatch(Match& match) {
         }
         managerProfile.winPercentage = (float)managerProfile.totalWins / managerProfile.totalMatches * 100.0f;
     }
+}
+
+// Simulate a Super Over between two teams
+std::string IPLManager::simulateSuperOver(const std::string& team1, const std::string& team2) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> runDist(0, 6); // Each ball: 0-6 runs
+    std::uniform_int_distribution<> wicketDist(0, 9); // 0-1 wicket (10% chance)
+    int team1Runs = 0, team2Runs = 0;
+    int team1Wickets = 0, team2Wickets = 0;
+    std::cout << "\nSuper Over: " << team1 << " batting\n";
+    for (int ball = 1; ball <= 6 && team1Wickets < 2; ++ball) {
+        int runs = runDist(gen);
+        bool wicket = (wicketDist(gen) == 0);
+        team1Runs += runs;
+        std::cout << "Ball " << ball << ": " << runs << " run(s)";
+        if (wicket) {
+            team1Wickets++;
+            std::cout << " - WICKET!";
+        }
+        std::cout << "\n";
+        if (team1Wickets == 2) break;
+    }
+    std::cout << "Total: " << team1Runs << "/" << team1Wickets << "\n";
+    std::cout << "Super Over: " << team2 << " batting\n";
+    for (int ball = 1; ball <= 6 && team2Wickets < 2; ++ball) {
+        int runs = runDist(gen);
+        bool wicket = (wicketDist(gen) == 0);
+        team2Runs += runs;
+        std::cout << "Ball " << ball << ": " << runs << " run(s)";
+        if (wicket) {
+            team2Wickets++;
+            std::cout << " - WICKET!";
+        }
+        std::cout << "\n";
+        if (team2Wickets == 2) break;
+    }
+    std::cout << "Total: " << team2Runs << "/" << team2Wickets << "\n";
+    if (team1Runs > team2Runs) return team1;
+    if (team2Runs > team1Runs) return team2;
+    return "Tie";
 }
 
 void IPLManager::updateLeagueTable() {
@@ -1282,7 +1444,7 @@ void IPLManager::manualAuction() {
                         maxBid = std::min(value * 1.0f, MAX_BID);
                         break;
                     case AIStrategy::WILDCARD:
-                        maxBid = std::min(value * (1.0f + (rand() % 100) / 200.0f), MAX_BID); // 1.0-1.5x
+                        maxBid = std::min(value * (1.0f + (rand() % 100) / 200.0f), MAX_BID);
                         break;
                 }
                 // AI only bids if under maxBid, has budget, and squad/overseas room
@@ -1340,6 +1502,63 @@ void IPLManager::manualAuction() {
     playerIndex++;
     std::cout << "\nType 'continue' to auction next player or 'back' to exit auction." << std::endl;
     std::cout << "Enter your choice: ";
+}
+
+// Avatar and Logo helpers
+std::string IPLManager::getTeamLogo(const std::string& teamName) {
+    if (teamName == "Mumbai Indians") {
+        return "🔵⚪ MI";
+    } else if (teamName == "Chennai Super Kings") {
+        return "🟡🔵 CSK";
+    } else if (teamName == "Royal Challengers Bangalore") {
+        return "🔴⚫ RCB";
+    } else if (teamName == "Kolkata Knight Riders") {
+        return "🟣🟡 KKR";
+    } else if (teamName == "Delhi Capitals") {
+        return "🔵🔴 DC";
+    } else if (teamName == "Punjab Kings") {
+        return "🔴⚪ PBKS";
+    } else if (teamName == "Rajasthan Royals") {
+        return "🔵🟡 RR";
+    } else if (teamName == "Sunrisers Hyderabad") {
+        return "🟠🔴 SRH";
+    } else if (teamName == "Gujarat Titans") {
+        return "🔵🟢 GT";
+    } else if (teamName == "Lucknow Super Giants") {
+        return "🔵🟢 LSG";
+    }
+    return "";
+}
+
+std::string IPLManager::getManagerAvatar() {
+    if (managerProfile.avatar == "Coach") {
+        return "👨‍💼";
+    } else if (managerProfile.avatar == "Captain") {
+        return "👨‍✈️";
+    } else if (managerProfile.avatar == "Analyst") {
+        return "📊";
+    } else if (managerProfile.avatar == "Legend") {
+        return "🏆";
+    } else if (managerProfile.avatar == "Rookie") {
+        return "🆕";
+    } else {
+        return "👤";
+    }
+}
+
+void IPLManager::simulateEntireSeason() {
+    printBanner("🏁 SIMULATING ENTIRE SEASON");
+    std::cout << "\nSimulating all matches...\n\n";
+    generateSeasonFixtures();
+    for (auto& match : seasonFixtures) {
+        simulateMatch(match);
+    }
+    updateLeagueTable();
+    std::cout << "\nAll matches completed!\n\n";
+    showLeagueTable();
+    std::cout << "\nPress Enter to return to main menu...";
+    std::cin.get();
+    currentState = GameState::MAIN_MENU;
 }
 
 int main(int argc, char* argv[]) {
