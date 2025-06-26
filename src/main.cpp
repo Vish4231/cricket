@@ -632,6 +632,7 @@ void IPLManager::showSeasonCalendar() {
     std::cout << "║                                                              ║\n";
     std::cout << "║  📊 table. View League Table                                ║\n";
     std::cout << "║  🏏 match. Simulate Next Match                              ║\n";
+    std::cout << "║  👥 squad. View Detailed Squad                              ║\n";
     std::cout << "║  ➡️  continue. Continue Season                              ║\n";
     std::cout << "║  ⬅️  back. Go Back                                          ║\n";
     std::cout << "║                                                              ║\n";
@@ -1013,17 +1014,16 @@ void IPLManager::simulateMatch(Match& match) {
         // Bowler selection: if manager is bowling
         if (match.team2 == managerProfile.selectedTeam && team2AI) {
             auto bowlers = getAvailableBowlers(*team2AI, team2BowlerOvers);
-            std::cout << "Select bowler for Over " << over << ":\n";
-            for (size_t i = 0; i < bowlers.size(); ++i) {
-                std::cout << (i+1) << ". " << bowlers[i]->name << " (Overs: " << team2BowlerOvers[bowlers[i]->name] << ", Skill: " << bowlers[i]->bowlingRating << ")\n";
+            bowler = selectPlayerWithArrows(bowlers, "Select Bowler for Over " + std::to_string(over));
+            if (bowler) {
+                team2BowlerOvers[bowler->name]++;
+            } else {
+                // Default to first available bowler if selection cancelled
+                if (!bowlers.empty()) {
+                    bowler = bowlers[0];
+                    team2BowlerOvers[bowler->name]++;
+                }
             }
-            int choice = 1;
-            std::cout << "Enter bowler number: ";
-            std::cin >> choice;
-            std::cin.ignore();
-            if (choice < 1 || choice > (int)bowlers.size()) choice = 1;
-            bowler = bowlers[choice-1];
-            team2BowlerOvers[bowler->name]++;
         } else if (team2AI) {
             // AI selects bowler
             auto bowlers = getAvailableBowlers(*team2AI, team2BowlerOvers);
@@ -1201,17 +1201,16 @@ void IPLManager::simulateMatch(Match& match) {
         // Bowler selection: if manager is bowling
         if (match.team1 == managerProfile.selectedTeam && team1AI) {
             auto bowlers = getAvailableBowlers(*team1AI, team1BowlerOvers);
-            std::cout << "Select bowler for Over " << over << ":\n";
-            for (size_t i = 0; i < bowlers.size(); ++i) {
-                std::cout << (i+1) << ". " << bowlers[i]->name << " (Overs: " << team1BowlerOvers[bowlers[i]->name] << ", Skill: " << bowlers[i]->bowlingRating << ")\n";
+            bowler = selectPlayerWithArrows(bowlers, "Select Bowler for Over " + std::to_string(over));
+            if (bowler) {
+                team1BowlerOvers[bowler->name]++;
+            } else {
+                // Default to first available bowler if selection cancelled
+                if (!bowlers.empty()) {
+                    bowler = bowlers[0];
+                    team1BowlerOvers[bowler->name]++;
+                }
             }
-            int choice = 1;
-            std::cout << "Enter bowler number: ";
-            std::cin >> choice;
-            std::cin.ignore();
-            if (choice < 1 || choice > (int)bowlers.size()) choice = 1;
-            bowler = bowlers[choice-1];
-            team1BowlerOvers[bowler->name]++;
         } else if (team1AI) {
             // AI selects bowler
             auto bowlers = getAvailableBowlers(*team1AI, team1BowlerOvers);
@@ -2169,18 +2168,83 @@ void IPLManager::showDetailedSquad() {
 
 // Helper: Select player using arrow keys
 IPLPlayer* IPLManager::selectPlayerWithArrows(const std::vector<IPLPlayer*>& players, const std::string& title) {
-    // Implement player selection using arrow keys
-    // This is a placeholder and should be replaced with actual player selection logic
-    std::cout << "Selecting player with arrows...\n";
-    return nullptr;
+    if (players.empty()) return nullptr;
+    
+    int selectedIndex = 0;
+    bool selectionMade = false;
+    
+    while (!selectionMade) {
+        clearScreen();
+        printBanner(title);
+        std::cout << "\n";
+        
+        std::cout << "Use ↑/↓ arrows to select, Enter to confirm, Esc to cancel\n\n";
+        
+        for (size_t i = 0; i < players.size(); ++i) {
+            if (i == selectedIndex) {
+                std::cout << "  ▶ "; // Selected indicator
+            } else {
+                std::cout << "    ";
+            }
+            
+            const auto& player = players[i];
+            std::cout << std::left << std::setw(25) << player->name
+                      << std::setw(12) << player->role
+                      << std::setw(10) << player->battingApproach
+                      << std::setw(8) << std::fixed << std::setprecision(0) << player->battingRating
+                      << std::setw(8) << std::fixed << std::setprecision(0) << player->bowlingRating
+                      << std::setw(8) << std::fixed << std::setprecision(0) << player->fieldingRating << "\n";
+        }
+        
+        int key = getArrowKeyInput();
+        switch (key) {
+            case 1: // Up arrow
+                if (selectedIndex > 0) selectedIndex--;
+                break;
+            case 2: // Down arrow
+                if (selectedIndex < players.size() - 1) selectedIndex++;
+                break;
+            case 5: // Enter
+                selectionMade = true;
+                break;
+            case 6: // Escape
+                return nullptr;
+        }
+    }
+    
+    return players[selectedIndex];
 }
 
 // Helper: Get arrow key input
 int IPLManager::getArrowKeyInput() {
-    // Implement arrow key input handling
-    // This is a placeholder and should be replaced with actual arrow key input logic
-    std::cout << "Getting arrow key input...\n";
-    return 0;
+    char input;
+    std::cin.get(input);
+    
+    // Check for arrow keys (ESC sequence)
+    if (input == '\033') {
+        std::cin.get(input); // Skip '['
+        if (input == '[') {
+            std::cin.get(input);
+            switch (input) {
+                case 'A': return 1; // Up arrow
+                case 'B': return 2; // Down arrow
+                case 'C': return 3; // Right arrow
+                case 'D': return 4; // Left arrow
+            }
+        }
+    }
+    
+    // Check for Enter key
+    if (input == '\n' || input == '\r') {
+        return 5; // Enter
+    }
+    
+    // Check for Escape key
+    if (input == 27) {
+        return 6; // Escape
+    }
+    
+    return 0; // No special key
 }
 
 int main(int argc, char* argv[]) {
