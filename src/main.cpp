@@ -742,8 +742,13 @@ void IPLManager::showLeagueTable() {
     
     std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
     std::cout << "\n";
-    std::cout << "⬅️  back. Go Back\n";
-    std::cout << "Enter your choice: ";
+    std::cout << "╔══════════════════════════════════════════════════════════════╗\n";
+    std::cout << "║                                                              ║\n";
+    std::cout << "║  0. Go Back                                                 ║\n";
+    std::cout << "║                                                              ║\n";
+    std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
+    std::cout << "\n";
+    std::cout << "Enter your choice (0): ";
 }
 
 void IPLManager::showPlayoffs() {
@@ -759,12 +764,12 @@ void IPLManager::showPlayoffs() {
     std::cout << "║  Qualifier 2: Loser Q1 vs Winner Eliminator                 ║\n";
     std::cout << "║  Final: Winner Q1 vs Winner Q2                              ║\n";
     std::cout << "║                                                              ║\n";
-    std::cout << "║  ➡️  continue. Simulate Playoffs                            ║\n";
-    std::cout << "║  ⬅️  back. Go Back                                          ║\n";
+    std::cout << "║  1. Simulate Playoffs                                       ║\n";
+    std::cout << "║  0. Go Back                                                 ║\n";
     std::cout << "║                                                              ║\n";
     std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
     std::cout << "\n";
-    std::cout << "Enter your choice: ";
+    std::cout << "Enter your choice (0-1): ";
 }
 
 void IPLManager::showCareerSummary() {
@@ -784,12 +789,12 @@ void IPLManager::showCareerSummary() {
     std::cout << "║  Win Percentage: " << std::left << std::setw(41) << std::fixed << std::setprecision(1) << managerProfile.winPercentage << "% ║\n";
     std::cout << "║  Championships: " << std::left << std::setw(42) << managerProfile.championships << "║\n";
     std::cout << "║                                                              ║\n";
-    std::cout << "║  ➡️  continue. Start Next Season                             ║\n";
-    std::cout << "║  ⬅️  back. Return to Main Menu                               ║\n";
+    std::cout << "║  1. Start Next Season                                       ║\n";
+    std::cout << "║  0. Return to Main Menu                                     ║\n";
     std::cout << "║                                                              ║\n";
     std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
     std::cout << "\n";
-    std::cout << "Enter your choice: ";
+    std::cout << "Enter your choice (0-1): ";
 }
 
 void IPLManager::showSettings() {
@@ -804,11 +809,11 @@ void IPLManager::showSettings() {
     std::cout << "║  💾 Save/Load Game                                          ║\n";
     std::cout << "║  ℹ️  About                                                   ║\n";
     std::cout << "║                                                              ║\n";
-    std::cout << "║  ⬅️  back. Go Back                                          ║\n";
+    std::cout << "║  0. Go Back                                                 ║\n";
     std::cout << "║                                                              ║\n";
     std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
     std::cout << "\n";
-    std::cout << "Enter your choice: ";
+    std::cout << "Enter your choice (0): ";
 }
 
 // Game Logic Methods
@@ -1712,7 +1717,7 @@ void IPLManager::simulateAuction() {
             continue;
         }
         
-        // Give user's team priority if they need this player and have less than 18 players
+        // Check if user's team needs this player and has less than 18 players
         SquadStats userStats = getSquadStats(*userTeam);
         bool userNeedsPlayer = false;
         if (player.role == "Wicket-keeper" && userStats.wicketKeepers < 1) {
@@ -1824,66 +1829,116 @@ void IPLManager::simulateAuction() {
         if (!assigned) unassignedPlayers.push_back(player);
     }
 
-    // First, ensure user's team gets at least 18 players
-    SquadStats userStats = getSquadStats(*userTeam);
-    while (userStats.totalPlayers < 18 && !unassignedPlayers.empty()) {
-        // Find cheapest available player
-        auto it = std::min_element(unassignedPlayers.begin(), unassignedPlayers.end(), 
-            [](const IPLPlayer& a, const IPLPlayer& b) { return a.price < b.price; });
+    // Function to generate a generic player of specific role
+    auto generateGenericPlayer = [](const std::string& role, const std::string& nationality) -> IPLPlayer {
+        IPLPlayer player;
         
-        if (it != unassignedPlayers.end() && userTeam->budget >= it->price && 
-            (it->nationality == "Indian" || userTeam->overseasCount < 8)) {
-            
-            userTeam->squad.push_back(*it);
-            userTeam->budget -= it->price;
-            if (it->nationality == "Overseas") userTeam->overseasCount++;
-            unassignedPlayers.erase(it);
-            
-            std::cout << it->name << " → " << userTeam->team.name << " (₹" << it->price << " crore) [Auto-assigned]\n";
-            userStats = getSquadStats(*userTeam);
+        // Use real names from the database
+        std::vector<std::string> indianNames = {
+            "Rohit Sharma", "Ishan Kishan", "Suryakumar Yadav", "Tilak Varma", "Nehal Wadhera", "Shivam Dube", "Ruturaj Gaikwad", "Ajinkya Rahane", "Prithvi Shaw", "Shubman Gill", "KL Rahul", "Mayank Agarwal", "Rinku Singh", "Nitish Rana", "Venkatesh Iyer", "Devdutt Padikkal", "Rajat Patidar", "Abhishek Sharma", "Yashasvi Jaiswal", "Sanju Samson", "Ravindra Jadeja", "Deepak Chahar", "Jasprit Bumrah", "Harshal Patel", "Mohammed Siraj", "Umesh Yadav", "Tushar Deshpande", "Arshdeep Singh", "Avesh Khan", "Mukesh Kumar", "Yash Dayal", "Varun Chakravarthy", "Yuzvendra Chahal", "Krunal Pandya", "Washington Sundar", "Navdeep Saini", "Shahbaz Ahmed", "Kuldeep Yadav", "Axar Patel", "Simarjeet Singh", "Rajvardhan Hangargekar", "Prashant Solanki", "Ajay Mandal", "Bhagath Varma", "Nishant Sindhu", "Shaik Rasheed", "Subhranshu Senapati", "Kumar Kartikeya", "Piyush Chawla", "Arjun Tendulkar", "Raghav Goyal"
+        };
+        
+        std::vector<std::string> overseasNames = {
+            "Tim David", "Cameron Green", "Dewald Brevis", "Tristan Stubbs", "Devon Conway", "Ben Stokes", "Moeen Ali", "Mitchell Santner", "Kyle Jamieson", "Faf du Plessis", "Glenn Maxwell", "Josh Hazlewood", "Wanindu Hasaranga", "David Warner", "Mitchell Marsh", "Rilee Rossouw", "Phil Salt", "Liam Livingstone", "Sam Curran", "Kagiso Rabada", "Jonny Bairstow", "Jos Buttler", "Trent Boult", "Shimron Hetmyer", "Obed McCoy", "Rashid Khan", "David Miller", "Matthew Wade", "Alzarri Joseph", "Lockie Ferguson", "Kane Williamson", "Nicholas Pooran", "Quinton de Kock", "Marcus Stoinis", "Mark Wood", "Kyle Mayers", "Aiden Markram", "Heinrich Klaasen", "Marco Jansen", "Pat Cummins", "Harry Brook", "Rahmanullah Gurbaz", "Andre Russell", "Sunil Narine", "Tim Southee", "Jason Roy", "Dwaine Pretorius", "Sisanda Magala", "Chris Jordan", "Jofra Archer", "Riley Meredith"
+        };
+        
+        // Select a real name based on nationality
+        std::string selectedName;
+        if (nationality == "Indian") {
+            selectedName = indianNames[rand() % indianNames.size()];
         } else {
-            break; // Can't afford or no suitable players
+            selectedName = overseasNames[rand() % overseasNames.size()];
         }
-    }
-
-    // Then fill requirements for other teams
-    for (auto& ai : aiTeams) {
-        if (&ai == userTeam) continue; // Skip user team as we already handled it
         
+        // Add a unique identifier to avoid duplicate names
+        selectedName += " " + std::to_string(rand() % 1000);
+        
+        player.name = selectedName;
+        player.role = role;
+        player.nationality = nationality;
+        player.battingRating = 50 + rand() % 30; // 50-79
+        player.bowlingRating = 50 + rand() % 30; // 50-79
+        player.fieldingRating = 50 + rand() % 30; // 50-79
+        player.price = 1.0f; // Base price
+        player.age = 20 + rand() % 15; // 20-34
+        
+        // Assign batting approach based on role
+        if (role == "Batsman") {
+            player.battingApproach = "Balanced";
+        } else if (role == "All-rounder") {
+            player.battingApproach = "Balanced";
+        } else if (role == "Wicket-keeper") {
+            player.battingApproach = "Balanced";
+        } else {
+            player.battingApproach = "Defensive";
+        }
+        
+        return player;
+    };
+
+    // Ensure ALL teams meet requirements
+    for (auto& ai : aiTeams) {
         SquadStats stats = getSquadStats(ai);
+        
         // Helper to assign cheapest available player of a role
         auto assignRole = [&](const std::string& role, int needed) {
             for (int i = 0; i < needed; ++i) {
+                // First try to find from unassigned players
                 auto it = std::min_element(unassignedPlayers.begin(), unassignedPlayers.end(), [&](const IPLPlayer& a, const IPLPlayer& b) {
                     if (a.role != role) return false;
                     if (b.role != role) return true;
                     return a.price < b.price;
                 });
+                
                 if (it != unassignedPlayers.end() && it->role == role && ai.squad.size() < 25 && ai.budget >= it->price && (it->nationality == "Indian" || ai.overseasCount < 8)) {
                     ai.squad.push_back(*it);
                     ai.budget -= it->price;
                     if (it->nationality == "Overseas") ai.overseasCount++;
                     unassignedPlayers.erase(it);
+                    std::cout << it->name << " → " << ai.team.name << " (₹" << it->price << " crore) [Auto-assigned]\n";
+                } else {
+                    // Generate generic player if no suitable player found
+                    std::string nationality = (ai.overseasCount < 8) ? "Overseas" : "Indian";
+                    IPLPlayer genericPlayer = generateGenericPlayer(role, nationality);
+                    ai.squad.push_back(genericPlayer);
+                    ai.budget -= genericPlayer.price;
+                    if (genericPlayer.nationality == "Overseas") ai.overseasCount++;
+                    std::cout << genericPlayer.name << " → " << ai.team.name << " (₹" << genericPlayer.price << " crore) [Generated]\n";
                 }
             }
         };
+        
+        // Fill role requirements
         if (stats.wicketKeepers < 1) assignRole("Wicket-keeper", 1 - stats.wicketKeepers);
         if (stats.allRounders < 3) assignRole("All-rounder", 3 - stats.allRounders);
         if (stats.bowlers < 5) assignRole("Bowler", 5 - stats.bowlers);
         if (stats.batsmen < 5) assignRole("Batsman", 5 - stats.batsmen);
-        if (stats.totalPlayers < 18) {
-            int needed = 18 - stats.totalPlayers;
-            for (int i = 0; i < needed; ++i) {
-                auto it = std::min_element(unassignedPlayers.begin(), unassignedPlayers.end(), [&](const IPLPlayer& a, const IPLPlayer& b) {
-                    return a.price < b.price;
-                });
-                if (it != unassignedPlayers.end() && ai.squad.size() < 25 && ai.budget >= it->price && (it->nationality == "Indian" || ai.overseasCount < 8)) {
-                    ai.squad.push_back(*it);
-                    ai.budget -= it->price;
-                    if (it->nationality == "Overseas") ai.overseasCount++;
-                    unassignedPlayers.erase(it);
-                }
+        
+        // Fill to minimum 18 players
+        stats = getSquadStats(ai);
+        while (stats.totalPlayers < 18) {
+            // Find cheapest available player
+            auto it = std::min_element(unassignedPlayers.begin(), unassignedPlayers.end(), 
+                [](const IPLPlayer& a, const IPLPlayer& b) { return a.price < b.price; });
+            
+            if (it != unassignedPlayers.end() && ai.squad.size() < 25 && ai.budget >= it->price && (it->nationality == "Indian" || ai.overseasCount < 8)) {
+                ai.squad.push_back(*it);
+                ai.budget -= it->price;
+                if (it->nationality == "Overseas") ai.overseasCount++;
+                unassignedPlayers.erase(it);
+                std::cout << it->name << " → " << ai.team.name << " (₹" << it->price << " crore) [Auto-assigned]\n";
+            } else {
+                // Generate generic player
+                std::string nationality = (ai.overseasCount < 8) ? "Overseas" : "Indian";
+                std::vector<std::string> roles = {"Batsman", "Bowler", "All-rounder"};
+                std::string role = roles[rand() % roles.size()];
+                IPLPlayer genericPlayer = generateGenericPlayer(role, nationality);
+                ai.squad.push_back(genericPlayer);
+                ai.budget -= genericPlayer.price;
+                if (genericPlayer.nationality == "Overseas") ai.overseasCount++;
+                std::cout << genericPlayer.name << " → " << ai.team.name << " (₹" << genericPlayer.price << " crore) [Generated]\n";
             }
+            stats = getSquadStats(ai);
         }
     }
     
